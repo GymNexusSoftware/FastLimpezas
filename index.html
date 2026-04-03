@@ -3,289 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastLimpezas - Agendamento Digital</title>
+    <title>FastLimpezas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --primary: #FFB300;
-            --primary-dark: #F57C00;
-            --secondary: #10B981;
-            --bg: #F8FAFC;
-            --white: #FFFFFF;
-            --text: #0F172A;
-            --text-light: #64748B;
-            --border: #E2E8F0;
-            --danger: #EF4444;
-            --radius: 12px;
-            --radius-lg: 20px;
+            --primary: #fbbf24;
+            --primary-dark: #d97706;
+            --bg: #f9fafb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
         }
-
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
-        h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         .hidden { display: none !important; }
 
-        /* --- LOGIN --- */
-        #login-screen { position: fixed; inset: 0; z-index: 1000; background: #FFB300; display: flex; align-items: center; justify-content: center; padding: 24px; }
-        .login-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
-        .login-card h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
-        .login-card p { color: var(--text-light); margin-bottom: 30px; }
-        
-        .input-group { text-align: left; margin-bottom: 16px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text-light); }
-        .input-modern { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; outline: none; box-sizing: border-box; transition: 0.2s; }
-        .input-modern:focus { border-color: var(--primary); }
+        /* Login */
+        .login-overlay { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .login-card { background: white; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .login-card h1 { font-family: 'Outfit'; font-size: 32px; margin-bottom: 30px; }
 
-        .btn-primary { width: 100%; background: var(--text); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-primary:active { transform: scale(0.98); }
-
-        /* --- DASHBOARD --- */
-        header { background: white; padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
-        .header-brand { display: flex; align-items: center; gap: 8px; }
-        .header-brand span { font-weight: 800; font-size: 1.1rem; }
-        .header-brand i { color: var(--primary); }
+        /* Layout */
+        header { background: white; border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .nav-brand { font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; }
         
-        .user-greeting { margin: 24px 24px 0; }
-        .user-greeting span { font-size: 13px; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .user-greeting h2 { font-size: 28px; font-weight: 800; margin-top: 4px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .welcome-section { margin-bottom: 30px; }
+        .welcome-section h2 { font-family: 'Outfit'; font-size: 28px; margin: 0; }
+        .welcome-section p { color: #6b7280; margin: 5px 0 0; }
 
-        .container { padding: 24px; }
-        
+        /* Cards */
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .service-card { background: white; border: 1px solid var(--border); padding: 20px; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        .service-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .service-icon { background: #fef3c7; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-bottom: 15px; color: var(--primary-dark); }
+        .service-card h4 { margin: 0 0 8px 0; font-size: 18px; }
+        .service-card p { font-size: 13px; color: #6b7280; margin-bottom: 15px; line-height: 1.4; }
+        .price-tag { font-weight: 800; color: #10b981; font-size: 1.1rem; }
+
+        /* Admin & Lists */
+        .admin-item { background: white; border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
+        .status-badge.pendente { background: #fef3c7; color: #92400e; }
+        .status-badge.confirmado { background: #d1fae5; color: #065f46; }
+
+        /* Forms */
+        form input, form select, form textarea, .input-modern { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 15px; outline: none; }
+        .btn-primary { background: var(--primary); border: none; color: #92400e; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary:hover { background: var(--primary-dark); color: white; }
+
+        /* Nav Bottom */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+        .nav-item { text-decoration: none; color: #6b7280; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .nav-item.active { color: var(--primary-dark); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 450px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; color: #6b7280; }
+
         /* Stats */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 24px; }
-        .stat-card { background: white; padding: 20px; border-radius: 20px; border: 1px solid var(--border); }
-        .stat-card .label { font-size: 12px; color: var(--text-light); font-weight: 600; display: block; }
-        .stat-card .value { font-size: 24px; font-weight: 800; margin-top: 4px; display: block; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; border: 1px solid var(--border); padding: 20px; border-radius: 15px; text-align: center; }
+        .stat-card .value { font-size: 24px; font-weight: 800; display: block; }
+        .stat-card .label { font-size: 12px; color: #6b7280; }
 
-        /* Listing Grid */
-        .grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 24px; }
-
-        /* Cards Style */
-        .service-card-modern { 
-            background: white; border-radius: 20px; padding: 20px; border: 1px solid var(--border); 
-            transition: 0.2s; cursor: pointer; position: relative;
-        }
-        .service-card-modern:active { transform: scale(0.96); }
-        .service-tag { position: absolute; top: 12px; right: 12px; background: #F1F5F9; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px; }
-        .service-icon { width: 44px; height: 44px; background: #FFF7ED; color: var(--primary-dark); display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-bottom: 16px; }
-        .service-desc { font-size: 13px; color: var(--text-light); line-height: 1.5; margin: 8px 0 16px; }
-        .price-line { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px solid #F1F5F9; padding-top: 16px; }
-        .price-line strong { font-size: 20px; font-weight: 800; }
-        .book-link { color: var(--text); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
-
-        /* Admin Items */
-        .admin-item { background: white; padding: 16px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .admin-info h4 { font-size: 16px; margin-bottom: 2px; }
-        .admin-info p { font-size: 12px; color: var(--text-light); }
-        .admin-actions { display: flex; gap: 8px; }
-        .icon-btn-bg { background: #F8FAFC; border: none; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .icon-btn-bg.red { color: var(--danger); background: #FEF2F2; }
-
-        /* status */
-        .status-pill { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
-        .status-pill.pendente { background: #FEF3C7; color: #92400E; }
-        .status-pill.confirmado { background: #D1FAE5; color: #065F46; }
-
-        /* Navigation */
-        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; height: 80px; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
-        .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--text-light); gap: 4px; transition: 0.2s; cursor: pointer; }
-        .tab-item i { width: 22px; height: 22px; }
-        .tab-item span { font-size: 11px; font-weight: 600; }
-        .tab-item.active { color: var(--text); }
-        .tab-item.active i { color: var(--primary); }
-
-        /* Modals */
-        .overlay-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; padding: 20px; display: flex; align-items: center; justify-content: center; }
-        .modal-body { background: white; width: 100%; max-width: 450px; border-radius: 24px; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); position: relative; max-height: 90vh; overflow-y: auto; }
-        .modal-close { position: absolute; top: 20px; right: 20px; cursor: pointer; color: var(--text-light); }
-
-        /* Toasts */
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #0F172A; color: white; padding: 12px 24px; border-radius: 12px; display: flex; align-items: center; gap: 8px; font-weight: 600; z-index: 2000; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-
-        @media (max-width: 600px) {
-            .user-greeting h2 { font-size: 24px; }
-            .grid-list { grid-template-columns: 1fr; }
-        }
+        #toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 12px 24px; border-radius: 15px; z-index: 2000; display: flex; align-items: center; gap: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="login-screen">
+    <!-- Login Section -->
+    <div id="login-screen" class="login-overlay">
         <div class="login-card">
-            <h1 style="font-family: 'Outfit';">FastLimpezas</h1>
-            <p>Faça login para gerir os seus agendamentos</p>
+            <h1>FastLimpezas</h1>
             <form id="login-form">
-                <div class="input-group">
-                    <label>Utilizador</label>
-                    <input type="text" id="username" class="input-modern" placeholder="admin ou o seu email" required>
-                </div>
-                <div class="input-group">
-                    <label>Palavra-passe</label>
-                    <input type="password" id="password" class="input-modern" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="btn-primary">
-                    <span>Entrar no Portal</span>
-                    <i data-lucide="chevron-right"></i>
-                </button>
+                <input type="text" id="username" placeholder="Utilizador ou Email" class="input-modern" required>
+                <input type="password" id="password" placeholder="Palavra-passe" class="input-modern" required>
+                <button type="submit" class="btn-primary">Entrar</button>
             </form>
         </div>
     </div>
 
-    <!-- Main Portal -->
+    <!-- Main Container -->
     <div id="main-content" class="hidden">
         <header>
-            <div class="header-brand">
-                <i data-lucide="sparkles"></i>
-                <span style="font-family: 'Outfit';">FastLimpezas</span>
-            </div>
-            <div style="display:flex; gap:12px;">
-                <button id="edit-profile-btn" class="icon-btn-bg hidden"><i data-lucide="user-cog" style="width:20px;"></i></button>
-                <button id="logout-btn" class="icon-btn-bg red"><i data-lucide="log-out" style="width:20px;"></i></button>
+            <div class="nav-brand">FastLimpezas</div>
+            <div style="display:flex; gap:10px;">
+                <button id="edit-profile-btn" class="hidden" style="background:none; border:none; cursor:pointer;"><i data-lucide="user-cog"></i></button>
+                <button id="logout-btn" style="background:none; border:none; cursor:pointer;"><i data-lucide="log-out"></i></button>
             </div>
         </header>
 
-        <div class="user-greeting">
-            <span id="role-label">Administrador</span>
-            <h2 id="welcome-msg">Bem-vindo à Gestão</h2>
-        </div>
+        <div class="container">
+            <div class="welcome-section">
+                <p id="role-badge" style="font-weight:700; color:var(--primary-dark); font-size:12px; text-transform:uppercase;">Portal</p>
+                <h2 id="welcome-msg">Bem-vindo!</h2>
+            </div>
 
-        <main class="container">
             <!-- Admin View -->
             <section id="admin-view" class="hidden">
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <span class="label">Clientes Totais</span>
                         <span id="stat-clients-val" class="value">0</span>
+                        <span class="label">Clientes</span>
                     </div>
                     <div class="stat-card">
-                        <span class="label">Agendamentos</span>
                         <span id="stat-bookings-val" class="value">0</span>
+                        <span class="label">Agendamentos</span>
                     </div>
                 </div>
-
-                <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="font-size: 20px;">Serviços Disponíveis</h3>
-                    <button id="add-service-btn" class="btn-primary" style="width:auto; padding:8px 16px; font-size:13px;">+ Novo Serviço</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3>Serviços</h3>
+                    <button id="add-service-btn" style="padding:8px 15px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">+ Novo</button>
                 </div>
-                <div id="admin-services-list" style="margin-top:20px;"></div>
+                <div id="admin-services-list"></div>
 
-                <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="font-size: 20px;">Fichas de Clientes</h3>
-                    <button id="add-client-btn" class="btn-primary" style="width:auto; padding:8px 16px; font-size:13px;">+ Novo Cliente</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:30px 0 20px;">
+                    <h3>Clientes</h3>
+                    <button id="add-client-btn" style="padding:8px 15px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">+ Novo</button>
                 </div>
-                <div id="admin-clients-list" style="margin-top:20px;"></div>
+                <div id="admin-clients-list"></div>
             </section>
 
             <!-- Agenda View -->
             <section id="agenda-view" class="hidden">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>Agenda de Limpezas</h3>
-                    <button id="admin-add-booking-btn" class="btn-primary" style="width:auto; padding:8px 16px; font-size:13px;">+ Criar Reserva</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3>Agenda Global</h3>
+                    <button id="admin-add-booking-btn" style="padding:8px 15px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">+ Agendar</button>
                 </div>
-                <div id="all-bookings-list" style="margin-top:24px;"></div>
+                <div id="all-bookings-list"></div>
             </section>
 
-            <!-- Client Home -->
+            <!-- Client View -->
             <section id="client-view" class="hidden">
                 <div id="client-home-content">
-                    <h3 style="font-size: 20px; margin-bottom: 4px;">Que limpeza vamos fazer hoje?</h3>
-                    <p style="color:var(--text-light); font-size: 14px;">Selecione o tipo de cuidado para a sua casa</p>
-                    <div id="cleaning-types-grid" class="grid-list"></div>
+                    <div id="cleaning-types-grid" class="services-grid"></div>
                 </div>
-
                 <div id="client-bookings-content" class="hidden">
                     <h3>Minhas Limpezas</h3>
-                    <div id="my-bookings" style="margin-top:24px;"></div>
+                    <div id="my-bookings"></div>
                 </div>
             </section>
-        </main>
+        </div>
 
-        <!-- Dynamic Nav -->
-        <nav id="nav-admin" class="tab-bar hidden">
-            <a class="tab-item active" data-view="admin">
+        <!-- Navigation -->
+        <nav id="nav-admin" class="bottom-nav hidden">
+            <div class="nav-item active" data-view="admin">
                 <i data-lucide="settings"></i>
                 <span>Gestão</span>
-            </a>
-            <a class="tab-item" data-view="agenda">
+            </div>
+            <div class="nav-item" data-view="agenda">
                 <i data-lucide="calendar"></i>
                 <span>Agenda</span>
-            </a>
+            </div>
         </nav>
 
-        <nav id="nav-client" class="tab-bar hidden">
-            <a class="tab-item active" data-view="client">
-                <i data-lucide="sparkles"></i>
-                <span>Serviços</span>
-            </a>
-            <a class="tab-item" data-view="client-bookings">
-                <i data-lucide="calendar-check"></i>
-                <span>Agenda</span>
-            </a>
+        <nav id="nav-client" class="bottom-nav hidden">
+            <div class="nav-item active" data-view="client">
+                <i data-lucide="home"></i>
+                <span>Início</span>
+            </div>
+            <div class="nav-item" data-view="client-bookings">
+                <i data-lucide="list"></i>
+                <span>Limpezas</span>
+            </div>
         </nav>
     </div>
 
     <!-- Modals -->
-    <div id="booking-modal" class="overlay-modal hidden">
-        <div class="modal-body">
-            <div class="modal-close" id="close-booking-modal"><i data-lucide="x"></i></div>
-            <h3 style="margin-bottom: 24px;">Confirmar Agendamento</h3>
-            <div id="service-select-container" class="input-group">
-                <label>Serviço</label>
-                <select id="booking-service-select" class="input-modern"></select>
+    <div id="booking-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="close-btn" id="close-booking-modal"><i data-lucide="x"></i></div>
+            <h3>Agendar Serviço</h3>
+            <select id="booking-service-select"></select>
+            <div id="client-select-container">
+                <select id="booking-client-select"></select>
             </div>
-            <div id="client-select-container" class="input-group">
-                <label>Cliente</label>
-                <select id="booking-client-select" class="input-modern"></select>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                <div class="input-group"><label>Data</label><input type="date" id="booking-date" class="input-modern"></div>
-                <div class="input-group"><label>Hora</label><input type="time" id="booking-time" class="input-modern"></div>
-            </div>
-            <div class="input-group"><label>Morada Completa</label><textarea id="booking-address" class="input-modern" rows="2"></textarea></div>
-            <div class="input-group"><label>Detalhes Adicionais</label><textarea id="booking-observations" class="input-modern" rows="2"></textarea></div>
-            <button id="confirm-booking" class="btn-primary">Marcar Limpeza</button>
+            <input type="date" id="booking-date">
+            <input type="time" id="booking-time">
+            <textarea id="booking-address" placeholder="Morada da Limpeza" rows="2"></textarea>
+            <textarea id="booking-observations" placeholder="Observações (ex: chave no vizinho...)" rows="2"></textarea>
+            <button id="confirm-booking" class="btn-primary">Confirmar</button>
         </div>
     </div>
 
-    <div id="client-modal" class="overlay-modal hidden">
-        <div class="modal-body">
-            <div class="modal-close" id="close-client-modal-btn"><i data-lucide="x"></i></div>
-            <h3 id="client-modal-title" style="margin-bottom:24px;">Configurar Cliente</h3>
-            <div class="input-group"><label>Nome</label><input type="text" id="client-name" class="input-modern"></div>
-            <div class="input-group"><label>E-mail</label><input type="email" id="client-email" class="input-modern"></div>
-            <div class="input-group"><label>Telemóvel</label><input type="text" id="client-contact" class="input-modern"></div>
-            <div id="password-group" class="input-group hidden">
-                <label>Palavra-passe</label>
-                <input type="text" id="client-password" class="input-modern">
+    <div id="client-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="close-btn" id="close-client-modal-btn"><i data-lucide="x"></i></div>
+            <h3 id="client-modal-title">Novo Cliente</h3>
+            <input type="text" id="client-name" placeholder="Nome">
+            <input type="email" id="client-email" placeholder="Email">
+            <input type="text" id="client-contact" placeholder="Contacto">
+            <div id="password-group" class="hidden">
+                <input type="text" id="client-password" placeholder="Palavra-passe">
             </div>
-            <div class="input-group"><label>Avenida/Rua de Limpeza</label><textarea id="client-address" class="input-modern" rows="2"></textarea></div>
-            <button id="save-client-btn" class="btn-primary">Guardar Dados</button>
+            <input type="text" id="client-nif" placeholder="NIF">
+            <textarea id="client-address" placeholder="Morada Completa" rows="2"></textarea>
+            <button id="save-client-btn" class="btn-primary">Salvar</button>
         </div>
     </div>
 
-    <div id="admin-modal" class="overlay-modal hidden">
-        <div class="modal-body">
-            <div class="modal-close" id="close-admin-modal-btn"><i data-lucide="x"></i></div>
-            <h3 style="margin-bottom:24px;">Serviço de Limpeza</h3>
-            <div class="input-group"><label>Título</label><input type="text" id="admin-service-name" class="input-modern"></div>
-            <div class="input-group"><label>Preço (€)</label><input type="number" id="admin-service-price" class="input-modern"></div>
-            <div class="input-group"><label>Descrição</label><textarea id="admin-service-desc" class="input-modern" rows="3"></textarea></div>
-            <button id="save-service-btn" class="btn-primary">Salvar Serviço</button>
+    <div id="admin-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="close-btn" id="close-admin-modal-btn"><i data-lucide="x"></i></div>
+            <h3>Configurar Serviço</h3>
+            <input type="text" id="admin-service-name" placeholder="Nome do Serviço">
+            <input type="number" id="admin-service-price" placeholder="Preço (€)">
+            <textarea id="admin-service-desc" placeholder="Descrição rápida do serviço" rows="3"></textarea>
+            <button id="save-service-btn" class="btn-primary">Gravar</button>
         </div>
     </div>
 
-    <!-- Email Modal -->
-    <div id="email-modal" class="overlay-modal hidden">
-        <div class="modal-body">
-            <div id="email-body-content" class="email-body"></div>
-            <button id="close-email-modal" class="btn-primary">OK</button>
+    <div id="email-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div id="email-body-content"></div>
+            <button id="close-email-modal" class="btn-primary" style="margin-top:20px;">Fechar</button>
         </div>
     </div>
 
     <div id="toast" class="hidden">
-        <i data-lucide="check-circle" style="width:18px;"></i>
+        <i data-lucide="check-circle"></i>
         <span id="toast-msg">Sucesso!</span>
     </div>
 

@@ -141,11 +141,10 @@ function initEventListeners() {
     document.getElementById('save-client-btn').onclick = saveClient;
     document.getElementById('confirm-booking').onclick = handleBookingSubmit;
     
-    document.querySelectorAll('.tab-item').forEach(item => {
+    document.querySelectorAll('.nav-item').forEach(item => {
         item.onclick = (e) => {
             e.preventDefault();
-            const v = item.dataset.view;
-            switchView(v);
+            switchView(item.dataset.view);
         };
     });
 }
@@ -173,12 +172,12 @@ function loginSuccess() {
     document.getElementById('edit-profile-btn').classList.toggle('hidden', state.currentUser.role === 'admin');
     
     if (state.currentUser.role === 'admin') {
-        document.getElementById('role-label').textContent = 'Admin Especialista';
-        document.getElementById('welcome-msg').textContent = 'Bem-vindo à Gestão Digital';
+        document.getElementById('role-badge').textContent = 'Administrador';
+        document.getElementById('welcome-msg').textContent = 'Gestão FastLimpezas';
         switchView('admin');
     } else {
-        document.getElementById('role-label').textContent = 'Estimado Cliente';
-        document.getElementById('welcome-msg').textContent = `Olá, ${state.currentUser.name.split(' ')[0]}`;
+        document.getElementById('role-badge').textContent = 'Portal Cliente';
+        document.getElementById('welcome-msg').textContent = `Olá, ${state.currentUser.name}!`;
         switchView('client');
     }
 }
@@ -191,7 +190,7 @@ function switchView(view) {
     document.getElementById('agenda-view').classList.add('hidden');
     document.getElementById('client-view').classList.add('hidden');
     
-    document.querySelectorAll('.tab-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
 
     if (view === 'admin') {
         renderAdminServices();
@@ -217,19 +216,61 @@ function updateStats() {
     if(bookingsVal) bookingsVal.textContent = state.bookings.length;
 }
 
+function renderClientView() {
+    const grid = document.getElementById('cleaning-types-grid'); 
+    if(grid) {
+        grid.innerHTML = '';
+        state.cleaningTypes.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.innerHTML = `
+                <div class="service-icon"><i data-lucide="sparkles"></i></div>
+                <h4>${s.name}</h4>
+                <p>${s.desc || 'Serviço profissional de limpeza FastLimpezas.'}</p>
+                <div class="price-tag">${s.isCustom ? 'Sob Consulta' : s.price + '€'}</div>
+            `;
+            card.onclick = () => openBookingModal(s);
+            grid.appendChild(card);
+        });
+    }
+    
+    const myList = document.getElementById('my-bookings'); 
+    if(myList) {
+        myList.innerHTML = '';
+        const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
+        if (userBookings.length === 0) {
+            myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
+        } else {
+            userBookings.forEach(b => {
+                const item = document.createElement('div');
+                item.className = 'admin-item';
+                item.innerHTML = `
+                    <div class="admin-info">
+                        <h4 style="margin:0">${b.serviceName}</h4>
+                        <p style="margin:5px 0 0; color:#6b7280">${b.date} • ${b.time}</p>
+                    </div>
+                    <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
+                `;
+                myList.appendChild(item);
+            });
+        }
+    }
+    window.lucide.createIcons();
+}
+
 function renderAdminServices() {
     const list = document.getElementById('admin-services-list'); if(!list) return; list.innerHTML = '';
     state.cleaningTypes.forEach(s => {
         const item = document.createElement('div');
         item.className = 'admin-item';
         item.innerHTML = `
-            <div class="admin-info">
-                <h4>${s.name}</h4>
-                <p>Valor: ${s.isCustom ? 'Orçamental' : s.price + '€'}</p>
+            <div>
+                <h4 style="margin:0">${s.name}</h4>
+                <p style="margin:5px 0 0; color:#6b7280; font-size:12px;">${s.isCustom ? 'Sob Consulta' : s.price + '€'}</p>
             </div>
-            <div class="admin-actions">
-                <button class="icon-btn-bg edit-s"><i data-lucide="edit-3" style="width:18px;"></i></button>
-                <button class="icon-btn-bg del-s red"><i data-lucide="trash-2" style="width:18px;"></i></button>
+            <div style="display:flex; gap:8px;">
+                <button class="edit-s" style="background:none; border:none; cursor:pointer; color:#6b7280"><i data-lucide="edit-3" style="width:18px"></i></button>
+                <button class="del-s" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
             </div>
         `;
         item.querySelector('.edit-s').onclick = () => openServiceModal(s);
@@ -245,17 +286,17 @@ function renderAdminClients() {
         const item = document.createElement('div');
         item.className = 'admin-item';
         item.innerHTML = `
-            <div class="admin-info">
-                <h4>${c.name}</h4>
-                <p>${c.email} • ${c.contact || 'Sem contacto'}</p>
+            <div>
+                <h4 style="margin:0">${c.name}</h4>
+                <p style="margin:5px 0 0; color:#6b7280; font-size:12px;">${c.email} • ${c.contact || ''}</p>
             </div>
-            <div class="admin-actions">
-                <button class="icon-btn edit-c"><i data-lucide="edit-3"></i></button>
-                <button class="icon-btn del-c red"><i data-lucide="trash-2"></i></button>
+            <div style="display:flex; gap:8px;">
+                <button class="edit-c" style="background:none; border:none; cursor:pointer; color:#6b7280"><i data-lucide="edit-3" style="width:18px"></i></button>
+                <button class="del-c" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
             </div>
         `;
         item.querySelector('.edit-c').onclick = () => openClientModal(c);
-        item.querySelector('.del-c').onclick = async () => { if(confirm('Deseja eliminar este cliente?')) await remove(ref(db, "clients/" + c.id)); };
+        item.querySelector('.del-c').onclick = async () => { if(confirm('Eliminar cliente?')) await remove(ref(db, "clients/" + c.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
@@ -267,25 +308,24 @@ function renderGlobalAgenda() {
         const item = document.createElement('div');
         item.className = 'admin-item';
         item.innerHTML = `
-            <div class="admin-info">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="status-dot ${b.status.toLowerCase()}"></div>
-                    <h4>${b.serviceName}</h4>
+            <div>
+                <h4 style="margin:0">${b.serviceName}</h4>
+                <p style="margin:5px 0 0; color:#6b7280; font-size:12px;">${b.clientName} • ${b.date} • ${b.time}</p>
+                <div style="margin-top:8px;">
+                    <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
                 </div>
-                <p><strong>${b.clientName}</strong> • ${b.date} às ${b.time}</p>
-                <p style="font-size:12px; color:var(--primary-dark); margin-top:4px;">${b.address || 'Sem morada'}</p>
             </div>
-            <div class="admin-actions">
-                ${b.status === 'Pendente' ? `<button class="icon-btn set-p" style="color:var(--secondary)" title="Definir Preço"><i data-lucide="euro"></i></button>` : ''}
-                <button class="icon-btn del-b red"><i data-lucide="trash-2"></i></button>
+            <div style="display:flex; gap:8px;">
+                ${b.status === 'Pendente' ? `<button class="set-p" style="background:var(--primary); border:none; padding:5px 10px; border-radius:5px; font-size:11px; font-weight:bold; cursor:pointer;">Preço</button>` : ''}
+                <button class="del-b" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
             </div>
         `;
         const pBtn = item.querySelector('.set-p');
         if(pBtn) pBtn.onclick = async () => { 
-            const p = prompt('Indique o valor final para o orçamento (€)'); 
+            const p = prompt('Valor final?'); 
             if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p }); 
         };
-        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover agendamento?')) await remove(ref(db, "bookings/" + b.id)); };
+        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
