@@ -157,15 +157,17 @@
                 <input type="date" id="booking-date" class="input-modern">
             </div>
             <div class="input-group">
-                <label>Hora (Disponível: 08:00 - 17:00)</label>
+                <label>Hora (08:00 - 17:00)</label>
                 <input type="time" id="booking-time" class="input-modern" value="09:00" min="08:00" max="17:00">
             </div>
             <textarea id="booking-address" placeholder="Morada da Limpeza" class="input-modern" rows="2"></textarea>
-            <div style="text-align:right; margin-top:-10px; margin-bottom:15px;">
-                <button id="fill-registered-address" style="background:none; border:none; color:var(--primary-green-dark); font-size:11px; cursor:pointer; text-decoration:underline;">Usar morada do meu perfil</button>
+            <div class="input-group checkbox-group" style="margin-top:-10px; margin-bottom:15px; background:none; padding:0; gap:8px;">
+                <input type="checkbox" id="use-profile-address" style="width:16px; height:16px;">
+                <label for="use-profile-address" style="font-size:12px; margin:0">Usar a minha morada registada</label>
+                <span id="profile-address-msg" class="hidden" style="color:var(--primary-green-dark); font-size:11px; font-weight:700;">(Morada ativa)</span>
             </div>
             <textarea id="booking-observations" placeholder="Ex: Número de divisões, se tem animais, se é necessário aspirador, etc..." class="input-modern" rows="3"></textarea>
-            <button id="confirm-booking" class="btn primary full-width">Confirmar Agendamento</button>
+            <button id="confirm-booking" class="btn primary full-width">Enviar Pedido de Agendamento</button>
         </div>
     </div>
 

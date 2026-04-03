@@ -69,9 +69,16 @@ function initEventListeners() {
     document.getElementById('save-service-btn').onclick = saveService;
     document.getElementById('save-client-btn').onclick = saveClient;
     document.getElementById('confirm-booking').onclick = handleBookingSubmit;
-    document.getElementById('fill-registered-address').onclick = () => {
-        if(state.currentUser?.address) document.getElementById('booking-address').value = state.currentUser.address;
-    };
+    document.getElementById('use-profile-address').addEventListener('change', (e) => {
+        const addrField = document.getElementById('booking-address');
+        const msg = document.getElementById('profile-address-msg');
+        if(e.target.checked && state.currentUser?.address) {
+            addrField.value = state.currentUser.address;
+            msg.classList.remove('hidden');
+        } else {
+            msg.classList.add('hidden');
+        }
+    });
     
     document.querySelectorAll('.nav-item').forEach(item => {
         item.onclick = (e) => {
@@ -346,17 +353,22 @@ function openBookingModal(s = null) {
     const cS = document.getElementById('booking-client-select');
     if (!sS || !cS) return;
 
-    // Popular Dropdowns
+    // Reset Checkbox Morada
+    const cb = document.getElementById('use-profile-address');
+    if(cb) cb.checked = false;
+    document.getElementById('profile-address-msg').classList.add('hidden');
+
     sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
     cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
     
     if(s) sS.value = s.id;
     
     const addrField = document.getElementById('booking-address');
+    addrField.value = '';
+    
     if(state.currentUser.role === 'client') {
         document.getElementById('client-select-container').classList.add('hidden');
         cS.value = state.currentUser.id;
-        if(state.currentUser.address) addrField.value = state.currentUser.address;
     } else {
         document.getElementById('client-select-container').classList.remove('hidden');
     }
@@ -372,10 +384,12 @@ async function handleBookingSubmit() {
     
     if(!dateVal || !timeVal) return showToast('Data/Hora Obrigatório!', 'error');
 
-    // Validação de Domingo e Horário (Seg-Sab, 08-17)
-    const selectedDate = new Date(dateVal);
+    // Validação Robusta de Domingo (Ignora fusos horários UTC)
+    const [y, m, d] = dateVal.split('-').map(Number);
+    const selectedDate = new Date(y, m - 1, d);
     if(selectedDate.getDay() === 0) return showToast('Estamos encerrados ao Domingo!', 'error');
-    if(timeVal < '08:00' || timeVal > '17:00') return showToast('Horário: 08:00 às 17:00', 'error');
+    
+    if(timeVal < '08:00' || timeVal > '17:00') return showToast('Horário: 08:00 às 17:00!', 'error');
 
     const s = state.cleaningTypes.find(t => t.id === sid);
     const c = state.clients.find(cl => cl.id === cid);
