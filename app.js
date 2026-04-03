@@ -177,14 +177,33 @@ function renderClientView() {
         userBookings.forEach(b => {
             const item = document.createElement('div');
             item.className = 'booking-item';
+            const isWaiting = b.status === 'Aguardando Cliente';
+            
             item.innerHTML = `
                 <div class="booking-info">
                     <h4>${b.serviceName}</h4>
                     <p>${b.date} • ${b.time}</p>
                     <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
+                    ${isWaiting ? `
+                        <div style="margin-top:12px; display:flex; gap:10px;">
+                            <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Aceitar Orçamento</button>
+                            <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Recusar</button>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="booking-price">${b.finalPrice ? b.finalPrice + '€' : '--- '}</div>
             `;
+            
+            if(isWaiting) {
+                item.querySelector('.accept-p').onclick = async () => {
+                    if(confirm('Confirma o agendamento por este valor?'))
+                        await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
+                };
+                item.querySelector('.reject-p').onclick = async () => {
+                    if(confirm('Deseja recusar este orçamento?'))
+                        await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
+                };
+            }
             myList.appendChild(item);
         });
     }
