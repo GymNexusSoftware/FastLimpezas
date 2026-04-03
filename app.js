@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, update, remove, onChildAdded, onChildRemoved, onChildChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-analytics.js";
+import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
-// --- CONFIGURAÇÃO DO FIREBASE ---
+// config
 const firebaseConfig = {
   apiKey: "AIzaSyBa4OaHmPLLJlg6I1O3lX24ENsmZJU2NEo",
   authDomain: "fastlimpezas-fc27a.firebaseapp.com",
@@ -11,59 +10,20 @@ const firebaseConfig = {
   messagingSenderId: "104504126644",
   appId: "1:104504126644:web:aee99346225c12d7e23be1",
   measurementId: "G-QP7G6RMTX4",
-  // Adicionando explicitamente o URL do Realtime Database
   databaseURL: "https://fastlimpezas-fc27a-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
-let db;
-let analytics;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getDatabase(app);
-    try {
-        analytics = getAnalytics(app);
-    } catch (anErr) {
-        console.warn("Analytics bloqueado.");
-    }
-} catch (err) {
-    alert("Erro Crítico: Não foi possível ligar ao Realtime Database!");
-    console.error(err);
-}
-
-// Initial State - V11
 let state = {
-    currentUser: null, 
-    activeView: 'admin', 
-    editingClientId: null,
-    editingServiceId: null,
-    cleaningTypes: [],
-    bookings: [],
-    clients: []
+    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: []
 };
 
-// --- Selectors ---
-const loginScreen = () => document.getElementById('login-screen');
-const mainContent = () => document.getElementById('main-content');
-const adminView = () => document.getElementById('admin-view');
-const agendaView = () => document.getElementById('agenda-view');
-const clientView = () => document.getElementById('client-view');
-const roleBadge = () => document.getElementById('role-badge');
-const viewTitle = () => document.getElementById('view-title');
-const bookingModal = () => document.getElementById('booking-modal');
-const emailModal = () => document.getElementById('email-modal');
-const clientModal = () => document.getElementById('client-modal');
-const infoModal = () => document.getElementById('info-modal');
-const adminModal = () => document.getElementById('admin-modal');
-
-// --- Initialization ---
+// listeners
 document.addEventListener('DOMContentLoaded', () => {
     initFirebaseSync();
-    window.lucide.createIcons();
     initEventListeners();
-    const today = new Date().toISOString().split('T')[0];
-    const dIn = document.getElementById('booking-date');
-    if(dIn) dIn.setAttribute('min', today);
     const saved = sessionStorage.getItem('cleaning-session');
     if (saved) {
         state.currentUser = JSON.parse(saved);
@@ -72,68 +32,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initFirebaseSync() {
-    console.log("Iniciando Realtime Database Sync...");
-    
-    // Sync Services
-    onValue(ref(db, "services"), (snapshot) => {
-        const val = snapshot.val();
-        state.cleaningTypes = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
-        if (state.cleaningTypes.length === 0) seedInitialServices();
+    onValue(ref(db, "services"), (s) => {
+        const v = s.val();
+        state.cleaningTypes = v ? Object.keys(v).map(k => ({ id: k, ...v[k] })) : [];
         renderAdminServices();
-        if(state.activeView === 'client') renderClientView();
+        renderClientView();
     });
-
-    // Sync Clients
-    onValue(ref(db, "clients"), (snapshot) => {
-        const val = snapshot.val();
-        state.clients = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
+    onValue(ref(db, "clients"), (s) => {
+        const v = s.val();
+        state.clients = v ? Object.keys(v).map(k => ({ id: k, ...v[k] })) : [];
         updateStats();
         renderAdminClients();
     });
-
-    // Sync Bookings
-    onValue(ref(db, "bookings"), (snapshot) => {
-        const val = snapshot.val();
-        state.bookings = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
-        if(state.activeView === 'agenda') renderGlobalAgenda();
-        if(state.activeView === 'client' || state.activeView === 'client-bookings') renderClientView();
+    onValue(ref(db, "bookings"), (s) => {
+        const v = s.val();
+        state.bookings = v ? Object.keys(v).map(k => ({ id: k, ...v[k] })) : [];
+        renderGlobalAgenda();
+        renderClientView();
     });
-
-    setTimeout(() => migrateFromLocalStorage(), 2000);
-}
-
-async function seedInitialServices() {
-    const initial = [
-        { name: 'Limpeza Standard', price: 0, desc: 'Limpeza geral.', isCustom: true },
-        { name: 'Limpeza Profunda', price: 0, desc: 'Limpeza detalhada.', isCustom: true },
-        { name: 'Limpeza Vidros', price: 0, desc: 'Limpeza de vidros.', isCustom: true }
-    ];
-    for (const s of initial) await push(ref(db, "services"), s);
-}
-
-async function migrateFromLocalStorage() {
-    const oldData = localStorage.getItem('cleaning-app-v11');
-    if(!oldData) return;
-    const p = JSON.parse(oldData);
-    if (state.clients.length === 0 && p.clients?.length > 0) {
-        for (const c of p.clients) { delete c.id; await push(ref(db, "clients"), c); }
-        for (const b of p.bookings || []) { delete b.id; await push(ref(db, "bookings"), b); }
-        localStorage.removeItem('cleaning-app-v11');
-        showToast('Dados migrados!');
-    }
 }
 
 function initEventListeners() {
     document.getElementById('login-form').onsubmit = handleLogin;
-    document.getElementById('logout-btn').onclick = logout;
+    document.getElementById('logout-btn').onclick = () => { sessionStorage.removeItem('cleaning-session'); location.reload(); };
     document.getElementById('edit-profile-btn').onclick = () => {
         const c = state.clients.find(cl => cl.id === state.currentUser?.id);
         if(c) openClientModal(c);
     };
-    document.getElementById('close-booking-modal').onclick = () => bookingModal().classList.add('hidden');
-    document.getElementById('close-admin-modal-btn').onclick = () => adminModal().classList.add('hidden');
-    document.getElementById('close-client-modal-btn').onclick = () => clientModal().classList.add('hidden');
-    document.getElementById('close-email-modal').onclick = () => emailModal().classList.add('hidden');
+    document.getElementById('close-booking-modal').onclick = () => document.getElementById('booking-modal').classList.add('hidden');
+    document.getElementById('close-admin-modal-btn').onclick = () => document.getElementById('admin-modal').classList.add('hidden');
+    document.getElementById('close-client-modal-btn').onclick = () => document.getElementById('client-modal').classList.add('hidden');
+    document.getElementById('close-email-modal').onclick = () => document.getElementById('email-modal').classList.add('hidden');
     document.getElementById('add-service-btn').onclick = () => openServiceModal();
     document.getElementById('add-client-btn').onclick = () => openClientModal();
     document.getElementById('admin-add-booking-btn').onclick = () => openBookingModal();
@@ -157,7 +86,7 @@ function handleLogin(e) {
     else {
         const c = state.clients.find(cl => cl.email === u && cl.password === p);
         if (c) state.currentUser = { ...c, role: 'client' };
-        else return showToast('Login Falhou!', 'error');
+        else return showToast('Credenciais erradas!', 'error');
     }
     sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
     loginSuccess();
@@ -166,7 +95,7 @@ function handleLogin(e) {
 function loginSuccess() {
     if(!state.currentUser) return;
     document.getElementById('login-screen').classList.add('hidden');
-    mainContent().classList.remove('hidden');
+    document.getElementById('main-content').classList.remove('hidden');
     document.getElementById('nav-admin').classList.toggle('hidden', state.currentUser.role !== 'admin');
     document.getElementById('nav-client').classList.toggle('hidden', state.currentUser.role === 'admin');
     document.getElementById('edit-profile-btn').classList.toggle('hidden', state.currentUser.role === 'admin');
@@ -180,209 +109,119 @@ function loginSuccess() {
         document.getElementById('welcome-msg').textContent = `Olá, ${state.currentUser.name}!`;
         switchView('client');
     }
+    window.lucide.createIcons();
 }
-
-function logout() { sessionStorage.removeItem('cleaning-session'); location.reload(); }
 
 function switchView(view) {
     state.activeView = view;
     document.getElementById('admin-view').classList.add('hidden');
     document.getElementById('agenda-view').classList.add('hidden');
     document.getElementById('client-view').classList.add('hidden');
-    
     document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
 
     if (view === 'admin') {
-        renderAdminServices();
-        renderAdminClients();
         document.getElementById('admin-view').classList.remove('hidden');
     } else if (view === 'agenda') {
-        renderGlobalAgenda();
         document.getElementById('agenda-view').classList.remove('hidden');
     } else {
         document.getElementById('client-view').classList.remove('hidden');
         document.getElementById('client-home-content').classList.toggle('hidden', view !== 'client');
         document.getElementById('client-bookings-content').classList.toggle('hidden', view !== 'client-bookings');
-        renderClientView();
     }
     window.lucide.createIcons();
-    updateStats();
 }
 
 function updateStats() {
-    const clientsVal = document.getElementById('stat-clients-val');
-    const bookingsVal = document.getElementById('stat-bookings-val');
-    if(clientsVal) clientsVal.textContent = state.clients.length;
-    if(bookingsVal) bookingsVal.textContent = state.bookings.length;
+    const cV = document.getElementById('stat-clients-val');
+    const bV = document.getElementById('stat-bookings-val');
+    if(cV) cV.textContent = state.clients.length;
+    if(bV) bV.textContent = state.bookings.length;
 }
 
 function renderClientView() {
-    const grid = document.getElementById('cleaning-types-grid'); 
-    if(grid) {
-        grid.innerHTML = '';
-        state.cleaningTypes.forEach(s => {
-            const card = document.createElement('div');
-            card.className = 'service-card';
-            card.innerHTML = `
-                <div class="service-icon"><i data-lucide="sparkles"></i></div>
-                <h4>${s.name}</h4>
-                <p>${s.desc || 'Serviço profissional de limpeza FastLimpezas.'}</p>
-                <div class="price-tag">${s.isCustom ? 'Sob Consulta' : s.price + '€'}</div>
-            `;
-            card.onclick = () => openBookingModal(s);
-            grid.appendChild(card);
-        });
-    }
+    const grid = document.getElementById('cleaning-types-grid'); if(!grid) return;
+    grid.innerHTML = '';
+    state.cleaningTypes.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'service-card';
+        card.innerHTML = `
+            <div class="service-icon"><i data-lucide="sparkles"></i></div>
+            <h4>${s.name}</h4>
+            <p>${s.desc || 'Serviço profissional de limpeza.'}</p>
+            <div class="price-tag">${s.isCustom ? 'Sob Consulta' : s.price + '€'}</div>
+        `;
+        card.onclick = () => openBookingModal(s);
+        grid.appendChild(card);
+    });
     
-    const myList = document.getElementById('my-bookings'); 
-    if(myList) {
-        myList.innerHTML = '';
-        const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
-        if (userBookings.length === 0) {
-            myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
-        } else {
-            userBookings.forEach(b => {
-                const item = document.createElement('div');
-                item.className = 'admin-item';
-                item.innerHTML = `
-                    <div class="admin-info">
-                        <h4 style="margin:0">${b.serviceName}</h4>
-                        <p style="margin:5px 0 0; color:#6b7280">${b.date} • ${b.time}</p>
-                    </div>
-                    <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
-                `;
-                myList.appendChild(item);
-            });
-        }
+    const myList = document.getElementById('my-bookings'); if(!myList) return;
+    myList.innerHTML = '';
+    const uB = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
+    if (uB.length === 0) {
+        myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Sem limpezas agendadas.</p>';
+    } else {
+        uB.forEach(b => {
+            const item = document.createElement('div');
+            item.className = 'admin-item';
+            item.innerHTML = `<div><h4 style="margin:0">${b.serviceName}</h4><p style="margin:5px 0 0; color:#6b7280">${b.date}</p></div><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>`;
+            myList.appendChild(item);
+        });
     }
     window.lucide.createIcons();
 }
 
 function renderAdminServices() {
-    const list = document.getElementById('admin-services-list'); if(!list) return; list.innerHTML = '';
+    const list = document.getElementById('admin-services-list'); if(!list) return;
+    list.innerHTML = '';
     state.cleaningTypes.forEach(s => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `
-            <div>
-                <h4 style="margin:0">${s.name}</h4>
-                <p style="margin:5px 0 0; color:#6b7280; font-size:12px;">${s.isCustom ? 'Sob Consulta' : s.price + '€'}</p>
-            </div>
-            <div style="display:flex; gap:8px;">
-                <button class="edit-s" style="background:none; border:none; cursor:pointer; color:#6b7280"><i data-lucide="edit-3" style="width:18px"></i></button>
-                <button class="del-s" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
-            </div>
-        `;
+        item.innerHTML = `<div><h4 style="margin:0">${s.name}</h4><p style="margin:5px 0 0; color:#6b7280">${s.price}€</p></div>
+        <div style="display:flex; gap:8px;">
+            <button class="edit-s" style="background:none; border:none; cursor:pointer;"><i data-lucide="edit-3" style="width:18px"></i></button>
+            <button class="del-s" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
+        </div>`;
         item.querySelector('.edit-s').onclick = () => openServiceModal(s);
-        item.querySelector('.del-s').onclick = async () => { if(confirm('Eliminar serviço?')) await remove(ref(db, "services/" + s.id)); };
+        item.querySelector('.del-s').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "services/" + s.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
 }
 
 function renderAdminClients() {
-    const list = document.getElementById('admin-clients-list'); if(!list) return; list.innerHTML = '';
-    state.clients.forEach(c => {
+    const list = document.getElementById('admin-clients-list'); if(!list) return;
+    list.innerHTML = '';
+    state.clients.forEach(cl => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `
-            <div>
-                <h4 style="margin:0">${c.name}</h4>
-                <p style="margin:5px 0 0; color:#6b7280; font-size:12px;">${c.email} • ${c.contact || ''}</p>
-            </div>
-            <div style="display:flex; gap:8px;">
-                <button class="edit-c" style="background:none; border:none; cursor:pointer; color:#6b7280"><i data-lucide="edit-3" style="width:18px"></i></button>
-                <button class="del-c" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
-            </div>
-        `;
-        item.querySelector('.edit-c').onclick = () => openClientModal(c);
-        item.querySelector('.del-c').onclick = async () => { if(confirm('Eliminar cliente?')) await remove(ref(db, "clients/" + c.id)); };
+        item.innerHTML = `<div><h4 style="margin:0">${cl.name}</h4><p style="margin:5px 0 0; color:#6b7280">${cl.email}</p></div>
+        <div style="display:flex; gap:8px;">
+            <button class="edit-c" style="background:none; border:none; cursor:pointer;"><i data-lucide="edit-3" style="width:18px"></i></button>
+            <button class="del-c" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
+        </div>`;
+        item.querySelector('.edit-c').onclick = () => openClientModal(cl);
+        item.querySelector('.del-c').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "clients/" + cl.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
 }
 
 function renderGlobalAgenda() {
-    const list = document.getElementById('all-bookings-list'); if(!list) return; list.innerHTML = '';
+    const list = document.getElementById('all-bookings-list'); if(!list) return;
+    list.innerHTML = '';
     state.bookings.forEach(b => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `
-            <div>
-                <h4 style="margin:0">${b.serviceName}</h4>
-                <p style="margin:5px 0 0; color:#6b7280; font-size:12px;">${b.clientName} • ${b.date} • ${b.time}</p>
-                <div style="margin-top:8px;">
-                    <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
-                </div>
-            </div>
-            <div style="display:flex; gap:8px;">
-                ${b.status === 'Pendente' ? `<button class="set-p" style="background:var(--primary); border:none; padding:5px 10px; border-radius:5px; font-size:11px; font-weight:bold; cursor:pointer;">Preço</button>` : ''}
-                <button class="del-b" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
-            </div>
-        `;
-        const pBtn = item.querySelector('.set-p');
-        if(pBtn) pBtn.onclick = async () => { 
-            const p = prompt('Valor final?'); 
-            if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p }); 
-        };
-        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
+        item.innerHTML = `<div><h4 style="margin:0">${b.serviceName}</h4><p style="margin:2px 0 0; color:#6b7280">${b.clientName} • ${b.date}</p><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}" style="margin-top:5px; display:inline-block">${b.status}</span></div>
+        <div style="display:flex; gap:8px;">
+            <button class="set-p" style="background:var(--primary); border:none; padding:5px; border-radius:5px; font-weight:bold; cursor:pointer">Preço</button>
+            <button class="del-b" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
+        </div>`;
+        if(b.status !== 'Pendente') item.querySelector('.set-p').classList.add('hidden');
+        item.querySelector('.set-p').onclick = async () => { const p = prompt('Preço?'); if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p }); };
+        item.querySelector('.del-b').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "bookings/" + b.id)); };
         list.appendChild(item);
     });
-    window.lucide.createIcons();
-}
-
-function renderClientView() {
-    const grid = document.getElementById('cleaning-types-grid'); 
-    if(grid) {
-        grid.innerHTML = '';
-        state.cleaningTypes.forEach(s => {
-            const card = document.createElement('div');
-            card.className = 'service-card-modern';
-            card.innerHTML = `
-                <div class="service-tag">${s.isCustom ? 'Orçamental' : 'Preço Fixo'}</div>
-                <div class="service-icon"><i data-lucide="sparkles"></i></div>
-                <div class="card-content">
-                    <h4>${s.name}</h4>
-                    <p class="service-desc">${s.desc || 'Serviço profissional FastLimpezas.'}</p>
-                    <div class="price-line">
-                        <strong>${s.isCustom ? '---' : s.price + '€'}</strong>
-                        <span class="book-link">Agendar <i data-lucide="chevron-right" style="width:14px;"></i></span>
-                    </div>
-                </div>
-            `;
-            card.onclick = () => openBookingModal(s);
-            grid.appendChild(card);
-        });
-    }
-    
-    const myList = document.getElementById('my-bookings'); 
-    if(myList) {
-        myList.innerHTML = '';
-        const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
-        
-        if (userBookings.length === 0) {
-            myList.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-light)">Ainda não tem agendamentos realizados.</div>';
-        } else {
-            userBookings.forEach(b => {
-                const item = document.createElement('div');
-                item.className = 'booking-card-modern';
-                item.innerHTML = `
-                    <div class="status-dot ${b.status.replace(/ /g,'-').toLowerCase()}"></div>
-                    <div class="booking-main">
-                        <div class="booking-header">
-                            <h4>${b.serviceName}</h4>
-                        </div>
-                        <p style="font-size:12px; color:var(--text-light)">${b.date} • ${b.time}</p>
-                        <div class="booking-footer">
-                            <span class="status-pill ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
-                            <strong style="font-size:16px;">${b.finalPrice ? b.finalPrice + '€' : '--- '}</strong>
-                        </div>
-                    </div>
-                `;
-                myList.appendChild(item);
-            });
-        }
-    }
     window.lucide.createIcons();
 }
 
@@ -390,178 +229,79 @@ function openServiceModal(s = null) {
     state.editingServiceId = s ? s.id : null;
     document.getElementById('admin-service-name').value = s ? s.name : '';
     document.getElementById('admin-service-price').value = s ? s.price : '';
-    document.getElementById('admin-service-custom').checked = s?.isCustom || false;
-    adminModal().classList.remove('hidden');
+    document.getElementById('admin-service-desc').value = s ? s.desc : '';
+    document.getElementById('admin-modal').classList.remove('hidden');
 }
 
 async function saveService() {
-    const btn = document.getElementById('save-service-btn');
-    try {
-        btn.disabled = true;
-        const n = document.getElementById('admin-service-name').value;
-        const p = document.getElementById('admin-service-price').value;
-        const c = document.getElementById('admin-service-custom').checked;
-        const data = { name: n, price: p, isCustom: c };
-        if(state.editingServiceId) await update(ref(db, "services/" + state.editingServiceId), data);
-        else await push(ref(db, "services"), data);
-        adminModal().classList.add('hidden');
-    } catch (e) { showToast('Erro database!', 'error'); } finally { btn.disabled = false; }
+    const data = { name: document.getElementById('admin-service-name').value, price: document.getElementById('admin-service-price').value, desc: document.getElementById('admin-service-desc').value };
+    if(state.editingServiceId) await update(ref(db, "services/" + state.editingServiceId), data);
+    else await push(ref(db, "services"), data);
+    document.getElementById('admin-modal').classList.add('hidden');
 }
-
-function openBookingModal(s = null) {
-    const sS = document.getElementById('booking-service-select');
-    const cS = document.getElementById('booking-client-select');
-    
-    // Popular Dropdowns
-    sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
-    cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
-    
-    if(s) sS.value = s.id;
-    
-    const addrField = document.getElementById('booking-address');
-    const obsField = document.getElementById('booking-observations');
-    if(addrField) addrField.value = '';
-    if(obsField) obsField.value = '';
-
-    if(state.currentUser.role === 'client') {
-        document.getElementById('client-select-container').classList.add('hidden');
-        cS.value = state.currentUser.id;
-        if(state.currentUser.address) addrField.value = state.currentUser.address;
-    } else {
-        document.getElementById('client-select-container').classList.remove('hidden');
-    }
-    
-    bookingModal().classList.remove('hidden');
-}
-
-async function handleBookingSubmit() {
-    const btn = document.getElementById('confirm-booking');
-    try {
-        btn.disabled = true;
-        const sid = document.getElementById('booking-service-select').value;
-        const cid = document.getElementById('booking-client-select').value;
-        const d = document.getElementById('booking-date').value;
-        const t = document.getElementById('booking-time').value;
-        const o = document.getElementById('booking-observations').value;
-        const a = document.getElementById('booking-address').value;
-        
-        if(!d || !a) throw new Error('Data e Morada!');
-        
-        const s = state.cleaningTypes.find(tp => String(tp.id) === String(sid));
-        const c = state.clients.find(cl => String(cl.id) === String(cid));
-        
-        const data = { 
-            serviceName: s.name, 
-            clientName: c.name, 
-            clientEmail: c.email, 
-            date: d, 
-            time: t, 
-            status: 'Pendente', 
-            observations: o || '', 
-            address: a,
-            timestamp: Date.now() 
-        };
-        
-        await push(ref(db, "bookings"), data);
-        bookingModal().classList.add('hidden');
-        showToast('Pedido Enviado!');
-    } catch (e) { 
-        showToast(e.message || 'Erro!', 'error'); 
-    } finally { 
-        btn.disabled = false; 
-    }
-}
-
-function triggerEmailSimulation(content) {
-    const body = document.getElementById('email-body-content');
-    const overlay = document.getElementById('email-sending-overlay');
-    const success = document.getElementById('email-sent-success');
-    const closeBtn = document.getElementById('close-email-modal');
-    if(!body) return;
-    body.innerHTML = content;
-    overlay?.classList.remove('hidden');
-    success?.classList.add('hidden');
-    closeBtn?.classList.add('hidden');
-    emailModal().classList.remove('hidden');
-    setTimeout(() => {
-        overlay?.classList.add('hidden');
-        success?.classList.remove('hidden');
-        setTimeout(() => {
-            success?.classList.add('hidden');
-            closeBtn?.classList.remove('hidden');
-            window.lucide.createIcons();
-        }, 1200);
-    }, 1500);
-}
-
-function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Disponível</h3><p>Para: ${bk.clientEmail}</p><hr><p>Para o serviço ${bk.serviceName} propomos o valor de <strong>${bk.finalPrice}€</strong>.</p>`); }
-function showWelcomeEmail(e, p) { triggerEmailSimulation(`<p>Bem-vindo à FastLimpezas!</p><div style="background:#f3f4f6; padding:15px; border-radius:8px; margin:10px 0"><p>Utilizador: <strong>${e}</strong></p><p>Palavra-passe: <strong>${p}</strong></p></div>`); }
-function showCancellationEmail(bk, t) { triggerEmailSimulation(`<p>De: fastlimpezas@gmail.com</p><hr><p>${t === 'client' ? 'Serviço cancelado.' : 'O cliente cancelou o serviço.'}</p>`); }
-function showNewBookingAdminEmail(bk) { triggerEmailSimulation(`<h3>Novo Pedido</h3><p>O cliente <strong>${bk.clientName}</strong> solicitou <strong>${bk.serviceName}</strong> para <strong>${bk.date}</strong>.</p>`); }
-function showFinalConfirmationAdminEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Aceite</h3><p>O cliente <strong>${bk.clientName}</strong> ACEITOU o valor de <strong>${bk.finalPrice}€</strong>.</p>`); }
 
 function openClientModal(c = null) {
     state.editingClientId = c ? c.id : null;
     document.getElementById('client-name').value = c ? c.name : '';
     document.getElementById('client-email').value = c ? c.email : '';
-    document.getElementById('client-contact').value = c ? (c.contact || '') : '';
-    document.getElementById('client-nif').value = c ? (c.nif || '') : '';
-    document.getElementById('client-address').value = c ? (c.address || '') : '';
-    
-    const passGroup = document.getElementById('password-group');
-    if(passGroup) passGroup.classList.toggle('hidden', !c);
+    document.getElementById('client-contact').value = c ? c.contact : '';
+    document.getElementById('client-nif').value = c ? c.nif : '';
+    document.getElementById('client-address').value = c ? c.address : '';
+    document.getElementById('password-group').classList.toggle('hidden', !c);
     if(c) document.getElementById('client-password').value = c.password;
-    
-    clientModal().classList.remove('hidden');
+    document.getElementById('client-modal').classList.remove('hidden');
 }
 
 async function saveClient() {
-    const btn = document.getElementById('save-client-btn');
-    try {
-        btn.disabled = true;
-        
-        const n = document.getElementById('client-name').value;
-        const e = document.getElementById('client-email').value;
-        const contact = document.getElementById('client-contact').value;
-        const nif = document.getElementById('client-nif').value;
-        const address = document.getElementById('client-address').value;
-        
-        if(!n || !e) throw new Error('Nome e Email são obrigatórios!');
-        
-        const pass = document.getElementById('client-password')?.value || Math.random().toString(36).slice(-6).toUpperCase();
-        
-        const data = { 
-            name: n, 
-            email: e, 
-            contact: contact || '', 
-            nif: nif || '', 
-            address: address || '', 
-            password: pass, 
-            role: 'client' 
-        };
-        
-        if(state.editingClientId) {
-            await update(ref(db, "clients/" + state.editingClientId), data);
-            if (state.currentUser && state.currentUser.id === state.editingClientId) {
-                state.currentUser = { ...data, id: state.editingClientId };
-                sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
-            }
-        } else {
-            await push(ref(db, "clients"), data);
-            showWelcomeEmail(e, pass);
-        }
-        
-        clientModal().classList.add('hidden');
-        showToast('Guardado!');
-    } catch (e) { 
-        showToast(e.message || 'Erro!', 'error'); 
-        console.error(e);
-    } finally { 
-        btn.disabled = false; 
-    }
+    const data = { 
+        name: document.getElementById('client-name').value, 
+        email: document.getElementById('client-email').value,
+        contact: document.getElementById('client-contact').value,
+        nif: document.getElementById('client-nif').value,
+        address: document.getElementById('client-address').value,
+        password: document.getElementById('client-password')?.value || Math.random().toString(36).slice(-6).toUpperCase(),
+        role: 'client'
+    };
+    if(state.editingClientId) await update(ref(db, "clients/" + state.editingClientId), data);
+    else await push(ref(db, "clients"), data);
+    document.getElementById('client-modal').classList.add('hidden');
 }
 
-function showToast(m, type = 'success') {
+function openBookingModal(s = null) {
+    const sS = document.getElementById('booking-service-select');
+    const cS = document.getElementById('booking-client-select');
+    sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
+    cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
+    if(s) sS.value = s.id;
+    if(state.currentUser.role === 'client') {
+        document.getElementById('client-select-container').classList.add('hidden');
+        cS.value = state.currentUser.id;
+        document.getElementById('booking-address').value = state.currentUser.address || '';
+    } else {
+        document.getElementById('client-select-container').classList.remove('hidden');
+    }
+    document.getElementById('booking-modal').classList.remove('hidden');
+}
+
+async function handleBookingSubmit() {
+    const sid = document.getElementById('booking-service-select').value;
+    const cid = document.getElementById('booking-client-select').value;
+    const s = state.cleaningTypes.find(t => t.id === sid);
+    const c = state.clients.find(cl => cl.id === cid);
+    const data = {
+        serviceName: s.name, clientName: c.name, clientEmail: c.email,
+        date: document.getElementById('booking-date').value,
+        time: document.getElementById('booking-time').value,
+        address: document.getElementById('booking-address').value,
+        observations: document.getElementById('booking-observations').value,
+        status: 'Pendente'
+    };
+    await push(ref(db, "bookings"), data);
+    document.getElementById('booking-modal').classList.add('hidden');
+    showToast('Agendado!');
+}
+
+function showToast(m) {
     const t = document.getElementById('toast');
     document.getElementById('toast-msg').textContent = m;
     t.classList.remove('hidden');
