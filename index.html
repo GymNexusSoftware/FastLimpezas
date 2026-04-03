@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastLimpezas - Agendamento Premium</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="app" class="mobile-frame">
+        <!-- Login Screen -->
+        <div id="login-screen" class="overlay active">
+            <div class="role-card">
+                <div class="brand">
+                    <div class="logo-box">
+                        <i data-lucide="sparkles"></i>
+                    </div>
+                    <h1>FastLimpezas</h1>
+                    <p>Qualidade e Rapidez</p>
+                </div>
+                <h2>Acesso Restrito</h2>
+                <form id="login-form" class="buttons">
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="Utilizador" class="input-modern" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Palavra-passe" class="input-modern" required>
+                    </div>
+                    <button type="submit" class="btn primary">
+                        <i data-lucide="log-in"></i>
+                        <span>Entrar</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App Container -->
+        <main id="main-content" class="hidden">
+            <!-- Header -->
+            <header>
+                <div class="header-left">
+                    <span id="role-badge" class="badge"></span>
+                    <h1 id="view-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <button id="edit-profile-btn" class="icon-btn hidden" title="Editar Perfil">
+                        <i data-lucide="user-cog"></i>
+                    </button>
+                    <button id="logout-btn" class="icon-btn">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Client Portal -->
+            <section id="client-view" class="view hidden">
+                <div class="scroll-container">
+                    <!-- Section: Home (Services) -->
+                    <div id="client-home-content">
+                        <div class="welcome">
+                            <div class="welcome-text">
+                                <h2 id="client-welcome-name">Bem-vindo! 👋</h2>
+                                <p>Que limpeza vamos agendar hoje?</p>
+                            </div>
+                        </div>
+                        <div class="section-title">
+                            <h3>Nossos Serviços</h3>
+                        </div>
+                        <div id="cleaning-types-grid" class="services-grid"></div>
+                    </div>
+
+                    <!-- Section: My Bookings -->
+                    <div id="client-bookings-content" class="hidden">
+                        <div class="section-title">
+                            <h3>As Minhas Limpezas</h3>
+                            <p class="subtitle">Acompanhe os seus agendamentos</p>
+                        </div>
+                        <div id="my-bookings" class="bookings-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Gestão -->
+            <section id="admin-view" class="view hidden">
+                <div class="scroll-container">
+                    <div class="admin-stats">
+                        <div class="stat-card yellow" id="stat-clients">
+                            <span class="label">Clientes</span>
+                            <span class="value">0</span>
+                        </div>
+                        <div class="stat-card green" id="stat-bookings">
+                            <span class="label">Agendamentos</span>
+                            <span class="value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="section-header-row">
+                        <h3>Serviços</h3>
+                        <div class="actions">
+                            <button id="add-service-btn" class="btn-small secondary">
+                                <i data-lucide="sparkles"></i>
+                                <span>Novo Serviço</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="admin-services-list" class="admin-list"></div>
+
+                    <div class="divider"></div>
+
+                    <div class="section-header-row">
+                        <h3>Gestão de Clientes</h3>
+                        <button id="add-client-btn" class="btn-small yellow-btn">
+                            <i data-lucide="user-plus"></i>
+                            <span>Novo Cliente</span>
+                        </button>
+                    </div>
+                    <div id="admin-clients-list" class="admin-list"></div>
+                </div>
+            </section>
+
+            <!-- Admin Agenda -->
+            <section id="agenda-view" class="view hidden">
+                <div class="scroll-container">
+                    <div class="section-header-row">
+                        <h3>Agenda Global</h3>
+                        <button id="admin-add-booking-btn" class="btn-small secondary">
+                            <i data-lucide="plus-circle"></i>
+                            <span>Novo Agendamento</span>
+                        </button>
+                    </div>
+                    <div id="all-bookings-list" class="admin-list"></div>
+                </div>
+            </section>
+
+            <!-- Bottom Nav -->
+            <nav id="nav-admin" class="bottom-nav hidden">
+                <a href="#" class="nav-item active" data-view="admin">
+                    <i data-lucide="settings"></i>
+                    <span>Gestão</span>
+                </a>
+                <a href="#" class="nav-item" data-view="agenda">
+                    <i data-lucide="calendar"></i>
+                    <span>Agenda</span>
+                </a>
+            </nav>
+
+            <nav id="nav-client" class="bottom-nav hidden">
+                <a href="#" class="nav-item active" data-view="client">
+                    <i data-lucide="home"></i>
+                    <span>Início</span>
+                </a>
+                <a href="#" class="nav-item" data-view="client-bookings">
+                    <i data-lucide="calendar"></i>
+                    <span>Minhas Limpezas</span>
+                </a>
+            </nav>
+
+            <!-- Modals -->
+            <div id="booking-modal" class="modal hidden">
+                <div class="modal-content">
+                    <button class="close-modal" id="close-booking-modal"><i data-lucide="x"></i></button>
+                    <h3>Agendar Serviço</h3>
+                    <div id="service-select-container" class="input-group">
+                        <label>Serviço</label>
+                        <select id="booking-service-select" class="input-modern"></select>
+                    </div>
+                    <div id="client-select-container" class="input-group">
+                        <label>Cliente</label>
+                        <select id="booking-client-select" class="input-modern"></select>
+                    </div>
+                    <div class="input-group">
+                        <label>Data</label>
+                        <input type="date" id="booking-date" class="input-modern">
+                    </div>
+                    <div class="input-group">
+                        <label>Hora</label>
+                        <select id="booking-time" class="input-modern">
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                        </select>
+                    </div>
+                    <div class="booking-notes" style="margin: 20px 0 10px; color: #6B7280; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="clock" style="width:16px; height:16px"></i> 
+                        <span>Horário: 08:00 - 17:00 (Seg-Sáb)</span>
+                    </div>
+                    <div id="booking-observations-container" style="margin-bottom:20px">
+                        <label>Observações do Pedido</label>
+                        <textarea id="booking-observations" class="input-modern" placeholder="Informações adicionais (ex: nº de divisões, animais, foco...)" rows="3"></textarea>
+                    </div>
+                    <div id="booking-address-container" style="margin-bottom:15px">
+                        <label>Morada da Limpeza</label>
+                        <textarea id="booking-address" class="input-modern" placeholder="Morada completa onde será efetuado o serviço" rows="2"></textarea>
+                    </div>
+                    <button id="confirm-booking" class="btn primary full-width">Confirmar</button>
+                </div>
+            </div>
+
+            <div id="client-modal" class="modal hidden">
+                <div class="modal-content">
+                    <button class="close-modal" id="close-client-modal-btn"><i data-lucide="x"></i></button>
+                    <h3 id="client-modal-title">Novo Cliente</h3>
+                    <input type="text" id="client-name" placeholder="Nome Completo" class="input-modern">
+                    <input type="text" id="client-contact" placeholder="Contacto Telefónico" class="input-modern">
+                    <input type="email" id="client-email" placeholder="Email" class="input-modern">
+                    <div id="password-group" class="input-group hidden">
+                        <label>Alterar Palavra-passe</label>
+                        <input type="text" id="client-password" placeholder="Nova palavra-passe" class="input-modern">
+                    </div>
+                    <input type="text" id="client-nif" placeholder="NIF" class="input-modern">
+                    <textarea id="client-address" placeholder="Morada Completa" class="input-modern" rows="3"></textarea>
+                    <button id="save-client-btn" class="btn primary full-width">Salvar</button>
+                </div>
+            </div>
+
+            <!-- Email Simulation Modal -->
+            <div id="email-modal" class="modal hidden">
+                <div class="modal-content email-style">
+                    <div id="email-sending-overlay" class="sending-overlay hidden">
+                        <div class="spinner"></div>
+                        <p>A enviar e-mail...</p>
+                    </div>
+                    <div id="email-sent-success" class="sent-success hidden">
+                        <i data-lucide="check-circle-2"></i>
+                        <p>Enviado com Sucesso!</p>
+                    </div>
+                    <div id="email-body-content" class="email-body">
+                        <!-- Content injected via JS -->
+                    </div>
+                    <button id="close-email-modal" class="btn primary full-width">Concluído</button>
+                </div>
+            </div>
+
+            <div id="admin-modal" class="modal hidden">
+                <div class="modal-content">
+                    <button class="close-modal" id="close-admin-modal-btn"><i data-lucide="x"></i></button>
+                    <h3 id="service-modal-title">Configurar Serviço</h3>
+                    <input type="text" id="admin-service-name" placeholder="Nome do Serviço" class="input-modern">
+                    <input type="number" id="admin-service-duration" placeholder="Duração (h)" class="input-modern">
+                    <input type="number" id="admin-service-price" placeholder="Preço (€)" class="input-modern">
+                    <div class="input-group checkbox-group">
+                        <input type="checkbox" id="admin-service-custom">
+                        <label for="admin-service-custom" style="display:inline">Preço Sob Orçamento (Personalizado)</label>
+                    </div>
+                    <textarea id="admin-service-desc" placeholder="O que está incluído neste serviço?" class="input-modern" rows="4"></textarea>
+                    <button id="save-service-btn" class="btn primary full-width">Gravar</button>
+                </div>
+            </div>
+
+            <!-- Service Info Modal -->
+            <div id="info-modal" class="modal hidden">
+                <div class="modal-content">
+                    <button class="close-modal" id="close-info-modal-btn"><i data-lucide="x"></i></button>
+                    <h3 id="info-modal-title">Detalhes do Serviço</h3>
+                    <div id="info-modal-body" class="service-details-content">
+                        <!-- Content injected via JS -->
+                    </div>
+                    <button id="close-info-btn" class="btn secondary full-width" style="margin-top:20px">Fechar</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="toast" class="toast hidden">
+        <div id="toast-icon-box">
+            <i data-lucide="check-circle" id="toast-icon"></i>
+        </div>
+        <span id="toast-msg">Sucesso!</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
