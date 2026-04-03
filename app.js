@@ -178,16 +178,18 @@ function renderClientView() {
             const item = document.createElement('div');
             item.className = 'booking-item';
             const isWaiting = b.status === 'Aguardando Cliente';
+            const statusClass = b.status.replace(/ /g,'-').toLowerCase();
+            const statusText = isWaiting ? 'Orçamento Recebido' : b.status;
             
             item.innerHTML = `
                 <div class="booking-info">
                     <h4>${b.serviceName}</h4>
                     <p>${b.date} • ${b.time}</p>
-                    <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
                     ${isWaiting ? `
                         <div style="margin-top:12px; display:flex; gap:10px;">
-                            <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Aceitar Orçamento</button>
-                            <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Recusar</button>
+                            <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Aceitar Valor</button>
+                            <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px;">Recusar</button>
                         </div>
                     ` : ''}
                 </div>
