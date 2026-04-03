@@ -217,7 +217,7 @@ function renderClientView() {
                 
                 if(isWaiting) {
                     item.querySelector('.accept-p').onclick = async () => {
-                        if(confirm('Confirma o agendamento por este valor £?'))
+                        if(confirm('Confirma o agendamento por este valor €?'))
                             await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
                     };
                     item.querySelector('.reject-p').onclick = async () => {
@@ -293,17 +293,19 @@ function renderGlobalAgenda() {
         item.innerHTML = `
             <div class="admin-item-info">
                 <h4>${b.serviceName}</h4>
-                <p>${b.clientName} • ${b.date}</p>
+                <p>${b.clientName} • ${b.date} • ${b.time}</p>
+                <p style="font-size:11px; margin-top:4px;"><strong>Morada:</strong> ${b.address || 'Não definida'}</p>
+                ${b.observations ? `<p style="font-size:11px; color:#6b7280; font-style:italic;">"${b.observations}"</p>` : ''}
                 <div style="margin-top:5px"><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span></div>
             </div>
             <div class="actions">
-                ${b.status === 'Pendente' ? `<button class="btn-small set-p">Preço</button>` : ''}
+                ${b.status === 'Pendente' ? `<button class="btn-small set-p">Definir Preço</button>` : ''}
                 <button class="icon-btn del-b red"><i data-lucide="trash-2" style="width:18px"></i></button>
             </div>
         `;
         const pBtn = item.querySelector('.set-p');
         if(pBtn) pBtn.onclick = async () => {
-            const p = prompt('Preço final (£)?');
+            const p = prompt('Preço final (€)?');
             if(p) {
                 const updated = { ...b, status: 'Aguardando Cliente', finalPrice: p };
                 await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
