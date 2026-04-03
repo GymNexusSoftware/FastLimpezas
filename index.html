@@ -55,15 +55,11 @@
 
         <!-- Main App Container -->
         <main id="main-content" class="hidden">
-            <header style="padding: 12px 20px; align-items: center;">
-                <div class="header-left" style="display: flex; flex-direction: column; gap: 4px;">
-                    <!-- Mini Logo Local -->
-                    <img src="fastlimpezas.png" 
-                         alt="FastLimpezas" 
-                         style="height: 18px; width: auto; object-fit: contain; align-self: flex-start; margin-bottom: 4px;"
-                         onerror="this.style.display='none'">
+            <header>
+                <div class="header-left">
+                    <img src="fastlimpezas.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
                     <span id="role-badge" class="badge">Cliente</span>
-                    <h1 id="welcome-msg" style="font-size: 1.2rem; margin-top: 2px;">Bem-vindo!</h1>
+                    <h1 id="welcome-msg">Bem-vindo!</h1>
                 </div>
                 <div class="header-right">
                     <button id="edit-profile-btn" class="icon-btn hidden"><i data-lucide="user-cog"></i></button>
