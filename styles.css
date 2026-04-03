@@ -71,7 +71,7 @@ header {
 }
 
 .header-logo {
-    height: 45px;
+    height: 38px;
     width: auto;
     object-fit: contain;
 }
@@ -82,21 +82,23 @@ header {
 }
 
 #welcome-msg {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    line-height: 1.1;
     font-weight: 800;
     color: var(--text-main);
     font-family: 'Outfit', sans-serif;
 }
 
 .badge {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     text-transform: uppercase;
-    padding: 3px 10px;
+    padding: 2px 8px;
     border-radius: var(--radius-full);
     background: var(--primary-yellow-dark);
     color: var(--primary-green-dark);
     width: fit-content;
+    margin-bottom: 2px;
 }
 
 /* --- Views --- */
@@ -140,7 +142,7 @@ header {
 }
 
 .stat-card .value {
-    font-size: 34px;
+    font-size: 28px;
     font-weight: 800;
     font-family: 'Outfit', sans-serif;
 }
