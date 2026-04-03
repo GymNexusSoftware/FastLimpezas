@@ -277,13 +277,13 @@ async function saveService() {
 
 function openClientModal(c = null) {
     state.editingClientId = c ? c.id : null;
-    document.getElementById('client-name').value = c ? c.name : '';
-    document.getElementById('client-email').value = c ? c.email : '';
-    document.getElementById('client-contact').value = c ? c.contact : '';
-    document.getElementById('client-nif').value = c ? c.nif : '';
-    document.getElementById('client-address').value = c ? c.address : '';
+    document.getElementById('client-name').value = c ? (c.name || '') : '';
+    document.getElementById('client-email').value = c ? (c.email || '') : '';
+    document.getElementById('client-contact').value = c ? (c.contact || '') : '';
+    document.getElementById('client-nif').value = c ? (c.nif || '') : '';
+    document.getElementById('client-address').value = c ? (c.address || '') : '';
     document.getElementById('password-group').classList.toggle('hidden', !c);
-    if(c) document.getElementById('client-password').value = c.password;
+    if(c) document.getElementById('client-password').value = c.password || '';
     document.getElementById('client-modal').classList.remove('hidden');
 }
 
