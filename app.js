@@ -140,13 +140,14 @@ function renderClientView() {
     const grid = document.getElementById('cleaning-types-grid'); if(!grid) return;
     grid.innerHTML = '';
     state.cleaningTypes.forEach(s => {
+        const isVariable = s.isCustom || !s.price || s.price === '0' || s.price === 0;
         const card = document.createElement('div');
         card.className = 'service-card';
         card.innerHTML = `
             <div class="service-icon"><i data-lucide="sparkles"></i></div>
             <h4>${s.name}</h4>
             <p class="desc-text">${s.desc || 'Serviço profissional FastLimpezas.'}</p>
-            <div class="price">${s.price || 0}€</div>
+            <div class="price">${isVariable ? 'Sob Orçamento' : s.price + '€'}</div>
         `;
         card.onclick = () => openBookingModal(s);
         grid.appendChild(card);
@@ -156,7 +157,7 @@ function renderClientView() {
     myList.innerHTML = '';
     const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
     if (userBookings.length === 0) {
-        myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem agendamentos.</p>';
+        myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
     } else {
         userBookings.forEach(b => {
             const item = document.createElement('div');
@@ -167,7 +168,7 @@ function renderClientView() {
                     <p>${b.date} • ${b.time}</p>
                     <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
                 </div>
-                <div class="booking-price">${b.finalPrice || '---'}€</div>
+                <div class="booking-price">${b.finalPrice ? b.finalPrice + '€' : '--- '}</div>
             `;
             myList.appendChild(item);
         });
@@ -179,12 +180,13 @@ function renderAdminServices() {
     const list = document.getElementById('admin-services-list'); if(!list) return;
     list.innerHTML = '';
     state.cleaningTypes.forEach(s => {
+        const isVariable = s.isCustom || !s.price || s.price === '0' || s.price === 0;
         const item = document.createElement('div');
         item.className = 'admin-item';
         item.innerHTML = `
             <div class="admin-item-info">
                 <h4>${s.name}</h4>
-                <p>${s.price}€</p>
+                <p>${isVariable ? 'Preço Variável' : s.price + '€'}</p>
             </div>
             <div class="actions">
                 <button class="icon-btn edit-s"><i data-lucide="edit-3" style="width:18px"></i></button>
