@@ -134,8 +134,7 @@ function initEventListeners() {
     document.getElementById('close-admin-modal-btn').onclick = () => adminModal().classList.add('hidden');
     document.getElementById('close-client-modal-btn').onclick = () => clientModal().classList.add('hidden');
     document.getElementById('close-email-modal').onclick = () => emailModal().classList.add('hidden');
-    document.getElementById('close-info-modal-btn').onclick = () => infoModal().classList.add('hidden');
-    document.getElementById('close-info-btn').onclick = () => infoModal().classList.add('hidden');
+    document.getElementById('close-info-modal-btn')?.addEventListener('click', () => infoModal()?.classList.add('hidden'));
     document.getElementById('add-service-btn').onclick = () => openServiceModal();
     document.getElementById('add-client-btn').onclick = () => openClientModal();
     document.getElementById('admin-add-booking-btn').onclick = () => openBookingModal();
@@ -143,11 +142,12 @@ function initEventListeners() {
     document.getElementById('save-client-btn').onclick = saveClient;
     document.getElementById('confirm-booking').onclick = handleBookingSubmit;
     
-    document.querySelectorAll('.nav-item').forEach(item => {
+    document.querySelectorAll('.nav-link').forEach(item => {
         item.onclick = (e) => {
             e.preventDefault();
-            switchView(item.dataset.view);
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const view = item.dataset.view;
+            switchView(view);
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             item.classList.add('active');
         };
     });
@@ -161,7 +161,7 @@ function handleLogin(e) {
     else {
         const c = state.clients.find(cl => cl.email === u && cl.password === p);
         if (c) state.currentUser = { ...c, role: 'client' };
-        else return showToast('Inválido!');
+        else return showToast('Login Inválido!', 'error');
     }
     sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
     loginSuccess();
@@ -169,10 +169,11 @@ function handleLogin(e) {
 
 function loginSuccess() {
     if(!state.currentUser) return;
-    loginScreen().classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
     mainContent().classList.remove('hidden');
     document.getElementById('nav-admin').classList.toggle('hidden', state.currentUser.role !== 'admin');
     document.getElementById('nav-client').classList.toggle('hidden', state.currentUser.role === 'admin');
+    document.getElementById('edit-profile-btn').classList.toggle('hidden', state.currentUser.role === 'admin');
     if (state.currentUser.role === 'admin') switchView('admin'); else switchView('client');
 }
 
@@ -180,24 +181,31 @@ function logout() { sessionStorage.removeItem('cleaning-session'); location.relo
 
 function switchView(view) {
     state.activeView = view;
-    adminView().classList.add('hidden');
-    agendaView().classList.add('hidden');
-    clientView().classList.add('hidden');
+    document.getElementById('admin-view').classList.add('hidden');
+    document.getElementById('agenda-view').classList.add('hidden');
+    document.getElementById('client-view').classList.add('hidden');
+    
+    // Reset active states in both navs
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    const activeLink = document.querySelector(`.nav-link[data-view="${view}"]`);
+    if(activeLink) activeLink.classList.add('active');
+
     if (view === 'admin') {
         renderAdminServices();
         renderAdminClients();
-        adminView().classList.remove('hidden');
+        document.getElementById('admin-view').classList.remove('hidden');
         roleBadge().textContent = 'Admin';
-        viewTitle().textContent = 'Gestão';
+        viewTitle().textContent = 'Painel de Gestão';
     } else if (view === 'agenda') {
         renderGlobalAgenda();
-        agendaView().classList.remove('hidden');
+        document.getElementById('agenda-view').classList.remove('hidden');
         viewTitle().textContent = 'Agenda Global';
     } else {
-        clientView().classList.remove('hidden');
+        document.getElementById('client-view').classList.remove('hidden');
         document.getElementById('client-home-content').classList.toggle('hidden', view !== 'client');
         document.getElementById('client-bookings-content').classList.toggle('hidden', view !== 'client-bookings');
-        viewTitle().textContent = view === 'client' ? 'Início' : 'As Minhas Limpezas';
+        viewTitle().textContent = view === 'client' ? 'Nossos Serviços' : 'As Minhas Limpezas';
+        roleBadge().textContent = 'Portal Cliente';
         renderClientView();
     }
     window.lucide.createIcons();
@@ -205,8 +213,10 @@ function switchView(view) {
 }
 
 function updateStats() {
-    const v = document.querySelector('#stat-clients .value');
-    if(v) v.textContent = state.clients.length;
+    const clientsVal = document.getElementById('stat-clients-val');
+    const bookingsVal = document.getElementById('stat-bookings-val');
+    if(clientsVal) clientsVal.textContent = state.clients.length;
+    if(bookingsVal) bookingsVal.textContent = state.bookings.length;
 }
 
 function renderAdminServices() {
@@ -214,9 +224,18 @@ function renderAdminServices() {
     state.cleaningTypes.forEach(s => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `<div class="admin-item-info"><h4>${s.name}</h4><p>${s.isCustom ? 'Sob Orçamento' : s.price + '€'}</p></div><div class="actions"><button class="icon-btn edit-s"><i data-lucide="edit-3"></i></button><button class="icon-btn del-s red"><i data-lucide="trash-2"></i></button></div>`;
+        item.innerHTML = `
+            <div class="admin-info">
+                <h4>${s.name}</h4>
+                <p>${s.isCustom ? 'Sob Orçamento' : s.price + '€'}</p>
+            </div>
+            <div class="admin-actions">
+                <button class="icon-btn edit-s"><i data-lucide="edit-3"></i></button>
+                <button class="icon-btn del-s red"><i data-lucide="trash-2"></i></button>
+            </div>
+        `;
         item.querySelector('.edit-s').onclick = () => openServiceModal(s);
-        item.querySelector('.del-s').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "services/" + s.id)); };
+        item.querySelector('.del-s').onclick = async () => { if(confirm('Deseja eliminar este serviço?')) await remove(ref(db, "services/" + s.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
@@ -227,9 +246,18 @@ function renderAdminClients() {
     state.clients.forEach(c => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `<div class="admin-item-info"><h4>${c.name}</h4><p>${c.email}</p></div><div class="actions"><button class="icon-btn edit-c"><i data-lucide="edit-3"></i></button><button class="icon-btn del-c red"><i data-lucide="trash-2"></i></button></div>`;
+        item.innerHTML = `
+            <div class="admin-info">
+                <h4>${c.name}</h4>
+                <p>${c.email} • ${c.contact || 'Sem contacto'}</p>
+            </div>
+            <div class="admin-actions">
+                <button class="icon-btn edit-c"><i data-lucide="edit-3"></i></button>
+                <button class="icon-btn del-c red"><i data-lucide="trash-2"></i></button>
+            </div>
+        `;
         item.querySelector('.edit-c').onclick = () => openClientModal(c);
-        item.querySelector('.del-c').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "clients/" + c.id)); };
+        item.querySelector('.del-c').onclick = async () => { if(confirm('Deseja eliminar este cliente?')) await remove(ref(db, "clients/" + c.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
@@ -240,35 +268,84 @@ function renderGlobalAgenda() {
     state.bookings.forEach(b => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `<div class="admin-item-info"><h4>${b.serviceName}</h4><p>${b.clientName} • ${b.finalPrice || 'Pendente'}€</p><span class="status-badge ${b.status.toLowerCase()}">${b.status}</span></div><div class="actions"><button class="btn-small set-p">Definir Preço</button><button class="icon-btn del-b"><i data-lucide="trash-2"></i></button></div>`;
+        item.innerHTML = `
+            <div class="admin-info">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="status-dot ${b.status.toLowerCase()}"></div>
+                    <h4>${b.serviceName}</h4>
+                </div>
+                <p><strong>${b.clientName}</strong> • ${b.date} às ${b.time}</p>
+                <p style="font-size:12px; color:var(--primary-dark); margin-top:4px;">${b.address || 'Sem morada'}</p>
+            </div>
+            <div class="admin-actions">
+                ${b.status === 'Pendente' ? `<button class="icon-btn set-p" style="color:var(--secondary)" title="Definir Preço"><i data-lucide="euro"></i></button>` : ''}
+                <button class="icon-btn del-b red"><i data-lucide="trash-2"></i></button>
+            </div>
+        `;
         const pBtn = item.querySelector('.set-p');
-        if(b.status !== 'Pendente') pBtn.classList.add('hidden');
-        pBtn.onclick = async () => { const p = prompt('Preço?'); if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p }); };
-        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
+        if(pBtn) pBtn.onclick = async () => { 
+            const p = prompt('Indique o valor final para o orçamento (€)'); 
+            if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p }); 
+        };
+        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover agendamento?')) await remove(ref(db, "bookings/" + b.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
 }
 
 function renderClientView() {
-    const grid = document.getElementById('cleaning-types-grid'); if(grid) {
+    const grid = document.getElementById('cleaning-types-grid'); 
+    if(grid) {
         grid.innerHTML = '';
         state.cleaningTypes.forEach(s => {
             const card = document.createElement('div');
-            card.className = 'service-card';
-            card.innerHTML = `<di class="service-icon"><i data-lucide="sparkles"></i></di><h4>${s.name}</h4><div class="price">${s.isCustom ? 'Sob Orçamento' : s.price + '€'}</div>`;
+            card.className = 'service-card-modern';
+            card.innerHTML = `
+                <div class="service-tag">${s.isCustom ? 'Sob Consulta' : 'Preço Fixo'}</div>
+                <div class="card-icon-container">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div class="card-content">
+                    <h4>${s.name}</h4>
+                    <p class="service-desc">${s.desc || 'Serviço de limpeza profissional com garantia de qualidade FastLimpezas.'}</p>
+                    <div class="price-row">
+                        <span class="price-val">${s.isCustom ? '---' : s.price + '€'}</span>
+                        <button class="book-btn-mini">Agendar <i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+            `;
             card.onclick = () => openBookingModal(s);
             grid.appendChild(card);
         });
     }
-    const myList = document.getElementById('my-bookings'); if(myList) {
+    
+    const myList = document.getElementById('my-bookings'); 
+    if(myList) {
         myList.innerHTML = '';
-        state.bookings.filter(b => b.clientEmail === state.currentUser?.email).forEach(b => {
-            const item = document.createElement('div');
-            item.className = 'booking-item';
-            item.innerHTML = `<div class="booking-info"><h4>${b.serviceName}</h4><p>${b.date} • ${b.finalPrice || 'Sob Orçamento'}€</p><span class="status-badge ${b.status.toLowerCase()}">${b.status}</span></div>`;
-            myList.appendChild(item);
-        });
+        const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
+        
+        if (userBookings.length === 0) {
+            myList.innerHTML = '<div class="empty-state"><p>Ainda não tem limpezas agendadas.</p></div>';
+        } else {
+            userBookings.forEach(b => {
+                const item = document.createElement('div');
+                item.className = 'booking-card-modern';
+                item.innerHTML = `
+                    <div class="booking-status-indicator ${b.status.toLowerCase()}"></div>
+                    <div class="booking-main">
+                        <div class="booking-header">
+                            <h4>${b.serviceName}</h4>
+                            <span class="date-tag">${b.date} • ${b.time}</span>
+                        </div>
+                        <div class="booking-footer">
+                            <span class="status-badge-v2 ${b.status.toLowerCase()}">${b.status}</span>
+                            <span class="price-tag">${b.finalPrice ? b.finalPrice + '€' : 'A Combinar'}</span>
+                        </div>
+                    </div>
+                `;
+                myList.appendChild(item);
+            });
+        }
     }
     window.lucide.createIcons();
 }

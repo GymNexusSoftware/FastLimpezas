@@ -3,269 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastLimpezas - Agendamento Premium</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>FastLimpezas - Premium Service</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #FBBF24;
+            --primary-dark: #D97706;
+            --secondary: #10B981;
+            --bg: #F9FAFB;
+            --white: #FFFFFF;
+            --text: #1F2937;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+            --danger: #EF4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --radius-lg: 24px;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.5; }
+        h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; }
+        .hidden { display: none !important; }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen { 
+            position: fixed; inset: 0; z-index: 1000; 
+            background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .login-card { 
+            background: var(--white); padding: 40px; border-radius: var(--radius-lg); 
+            box-shadow: var(--shadow-lg); width: 100%; max-width: 400px; text-align: center;
+        }
+        .login-logo { width: 64px; height: 64px; background: #FEF3C7; color: var(--primary-dark); display: flex; align-items: center; justify-content: center; border-radius: 20px; margin: 0 auto 24px; }
+        .login-card h1 { font-size: 32px; margin-bottom: 8px; font-weight: 800; }
+        .login-card p { color: var(--text-light); margin-bottom: 32px; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-light); }
+        .input-modern { 
+            width: 100%; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: var(--radius); 
+            font-size: 15px; transition: 0.2s; box-sizing: border-box; outline: none;
+        }
+        .input-modern:focus { border-color: var(--primary); box-shadow: 0 0 0 4px #FEF3C7; }
+
+        .btn-primary { 
+            width: 100%; background: var(--primary); color: #92400E; border: none; padding: 14px; 
+            border-radius: var(--radius); font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary:hover { background: var(--primary-dark); color: white; transform: translateY(-2px); }
+
+        /* --- HEADER & NAV --- */
+        header { 
+            background: var(--white); border-bottom: 1px solid var(--border); 
+            padding: 0 24px; height: 80px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .header-brand { display: flex; align-items: center; gap: 12px; font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; }
+        .header-brand i { color: var(--primary-dark); }
+        .header-actions { display: flex; gap: 12px; }
+        
+        .icon-btn { 
+            background: #F3F4F6; border: none; width: 44px; height: 44px; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text);
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: #E5E7EB; color: var(--primary-dark); }
+        .icon-btn.red:hover { background: #FEE2E2; color: var(--danger); }
+
+        /* Bottom Nav */
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); 
+            border-top: 1px solid var(--border); height: 80px; display: flex; align-items: center; 
+            justify-content: space-around; z-index: 100; padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-link { 
+            display: flex; flex-direction: column; align-items: center; gap: 4px; 
+            color: var(--text-light); text-decoration: none; font-size: 11px; font-weight: 600;
+            transition: 0.2s; cursor: pointer;
+        }
+        .nav-link i { width: 24px; height: 24px; }
+        .nav-link.active { color: var(--primary-dark); }
+
+        /* --- MAIN CONTENT --- */
+        .container { max-width: 1000px; margin: 32px auto 120px; padding: 0 20px; }
+        .view-header { margin-bottom: 32px; }
+        .view-header h2 { font-size: 36px; margin: 0; font-weight: 800; }
+        .badge-role { background: #FEF3C7; color: #92400E; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 8px; display: inline-block; text-transform: uppercase; }
+
+        /* Grid */
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+
+        /* Modern Service Cards */
+        .service-card-modern { 
+            background: var(--white); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--border); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden;
+        }
+        .service-card-modern:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+        .service-tag { position: absolute; top: 20px; right: 20px; background: #ECFDF5; color: #059669; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; }
+        .card-icon-container { width: 56px; height: 56px; background: #FEF3C7; color: var(--primary-dark); display: flex; align-items: center; justify-content: center; border-radius: 18px; margin-bottom: 24px; }
+        .card-content h4 { font-size: 22px; margin: 0 0 10px 0; font-weight: 700; }
+        .service-desc { color: var(--text-light); font-size: 14px; line-height: 1.6; margin-bottom: 24px; height: 44px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .price-row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 20px; }
+        .price-val { font-size: 24px; font-weight: 800; color: var(--text); }
+        .book-btn-mini { background: var(--text); color: var(--white); border: none; padding: 12px 18px; border-radius: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+        .book-btn-mini:hover { background: var(--primary-dark); }
+
+        /* Booking Cards */
+        .booking-card-modern { 
+            background: var(--white); border-radius: 20px; padding: 20px; display: flex; gap: 20px; align-items: center; 
+            border: 1px solid var(--border); margin-bottom: 16px; transition: 0.2s; cursor: pointer;
+        }
+        .booking-card-modern:hover { border-color: var(--primary); transform: translateX(5px); }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .status-dot.pendente { background: var(--primary); }
+        .status-dot.confirmado { background: var(--secondary); }
+        .status-dot.rejeitado { background: var(--danger); }
+        .booking-main { flex: 1; }
+        .booking-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .booking-header h4 { margin: 0; font-size: 18px; }
+        .booking-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .status-badge-v2 { font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; }
+        .status-badge-v2.pendente { background: #FFF7ED; color: #D97706; }
+        .status-badge-v2.confirmado { background: #ECFDF5; color: #059669; }
+
+        /* Admin Lists */
+        .admin-item { background: var(--white); padding: 20px; border-radius: 20px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .admin-info h4 { margin: 0 0 4px 0; font-size: 18px; }
+        .admin-info p { margin: 0; color: var(--text-light); font-size: 13px; }
+        .admin-actions { display: flex; gap: 8px; }
+
+        /* Stats Cards */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: var(--white); padding: 24px; border-radius: 24px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+        .stat-icon { width: 52px; height: 52px; background: #F3F4F6; color: var(--text); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .stat-icon.green { background: #ECFDF5; color: #059669; }
+        .stat-info .stat-label { font-size: 13px; color: var(--text-light); font-weight: 600; }
+        .stat-info .stat-value { font-size: 28px; font-weight: 800; display: block; }
+
+        /* --- MODALS --- */
+        .modal-overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content { 
+            background: var(--white); border-radius: 28px; width: 100%; max-width: 500px; 
+            padding: 32px; box-shadow: var(--shadow-lg); position: relative; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h3 { margin: 0; font-size: 24px; }
+        .close-btn { background: #F3F4F6; border: none; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
+
+        /* Toasts */
+        #toast { 
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); 
+            background: #1F2937; color: var(--white); padding: 14px 24px; border-radius: 16px; 
+            display: flex; align-items: center; gap: 12px; z-index: 2000; box-shadow: var(--shadow-lg);
+            font-weight: 600;
+        }
+
+        /* Email simulation */
+        .email-body { background: #F9FAFB; padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin: 20px 0; font-family: monospace; }
+
+        @media (max-width: 600px) {
+            .container { padding: 0 16px; margin: 20px auto 100px; }
+            .view-header h2 { font-size: 28px; }
+        }
+    </style>
 </head>
 <body>
-    <div id="app" class="mobile-frame">
-        <!-- Login Screen -->
-        <div id="login-screen" class="overlay active">
-            <div class="role-card">
-                <div class="brand">
-                    <div class="logo-box">
-                        <i data-lucide="sparkles"></i>
-                    </div>
-                    <h1>FastLimpezas</h1>
-                    <p>Qualidade e Rapidez</p>
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-logo"><i data-lucide="sparkles"></i></div>
+            <h1>FastLimpezas</h1>
+            <p>Acesse a sua conta premium</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>E-mail ou Utilizador</label>
+                    <input type="text" id="username" class="input-modern" placeholder="admin ou o seu email" required>
                 </div>
-                <h2>Acesso Restrito</h2>
-                <form id="login-form" class="buttons">
-                    <div class="input-group">
-                        <input type="text" id="username" placeholder="Utilizador" class="input-modern" required>
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="password" placeholder="Palavra-passe" class="input-modern" required>
-                    </div>
-                    <button type="submit" class="btn primary">
-                        <i data-lucide="log-in"></i>
-                        <span>Entrar</span>
-                    </button>
-                </form>
-            </div>
+                <div class="input-group">
+                    <label>Palavra-passe</label>
+                    <input type="password" id="password" class="input-modern" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <span>Entrar no Portal</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
         </div>
-
-        <!-- Main App Container -->
-        <main id="main-content" class="hidden">
-            <!-- Header -->
-            <header>
-                <div class="header-left">
-                    <span id="role-badge" class="badge"></span>
-                    <h1 id="view-title">Dashboard</h1>
-                </div>
-                <div class="header-right">
-                    <button id="edit-profile-btn" class="icon-btn hidden" title="Editar Perfil">
-                        <i data-lucide="user-cog"></i>
-                    </button>
-                    <button id="logout-btn" class="icon-btn">
-                        <i data-lucide="log-out"></i>
-                    </button>
-                </div>
-            </header>
-
-            <!-- Client Portal -->
-            <section id="client-view" class="view hidden">
-                <div class="scroll-container">
-                    <!-- Section: Home (Services) -->
-                    <div id="client-home-content">
-                        <div class="welcome">
-                            <div class="welcome-text">
-                                <h2 id="client-welcome-name">Bem-vindo! 👋</h2>
-                                <p>Que limpeza vamos agendar hoje?</p>
-                            </div>
-                        </div>
-                        <div class="section-title">
-                            <h3>Nossos Serviços</h3>
-                        </div>
-                        <div id="cleaning-types-grid" class="services-grid"></div>
-                    </div>
-
-                    <!-- Section: My Bookings -->
-                    <div id="client-bookings-content" class="hidden">
-                        <div class="section-title">
-                            <h3>As Minhas Limpezas</h3>
-                            <p class="subtitle">Acompanhe os seus agendamentos</p>
-                        </div>
-                        <div id="my-bookings" class="bookings-list"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Admin Gestão -->
-            <section id="admin-view" class="view hidden">
-                <div class="scroll-container">
-                    <div class="admin-stats">
-                        <div class="stat-card yellow" id="stat-clients">
-                            <span class="label">Clientes</span>
-                            <span class="value">0</span>
-                        </div>
-                        <div class="stat-card green" id="stat-bookings">
-                            <span class="label">Agendamentos</span>
-                            <span class="value">0</span>
-                        </div>
-                    </div>
-
-                    <div class="section-header-row">
-                        <h3>Serviços</h3>
-                        <div class="actions">
-                            <button id="add-service-btn" class="btn-small secondary">
-                                <i data-lucide="sparkles"></i>
-                                <span>Novo Serviço</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="admin-services-list" class="admin-list"></div>
-
-                    <div class="divider"></div>
-
-                    <div class="section-header-row">
-                        <h3>Gestão de Clientes</h3>
-                        <button id="add-client-btn" class="btn-small yellow-btn">
-                            <i data-lucide="user-plus"></i>
-                            <span>Novo Cliente</span>
-                        </button>
-                    </div>
-                    <div id="admin-clients-list" class="admin-list"></div>
-                </div>
-            </section>
-
-            <!-- Admin Agenda -->
-            <section id="agenda-view" class="view hidden">
-                <div class="scroll-container">
-                    <div class="section-header-row">
-                        <h3>Agenda Global</h3>
-                        <button id="admin-add-booking-btn" class="btn-small secondary">
-                            <i data-lucide="plus-circle"></i>
-                            <span>Novo Agendamento</span>
-                        </button>
-                    </div>
-                    <div id="all-bookings-list" class="admin-list"></div>
-                </div>
-            </section>
-
-            <!-- Bottom Nav -->
-            <nav id="nav-admin" class="bottom-nav hidden">
-                <a href="#" class="nav-item active" data-view="admin">
-                    <i data-lucide="settings"></i>
-                    <span>Gestão</span>
-                </a>
-                <a href="#" class="nav-item" data-view="agenda">
-                    <i data-lucide="calendar"></i>
-                    <span>Agenda</span>
-                </a>
-            </nav>
-
-            <nav id="nav-client" class="bottom-nav hidden">
-                <a href="#" class="nav-item active" data-view="client">
-                    <i data-lucide="home"></i>
-                    <span>Início</span>
-                </a>
-                <a href="#" class="nav-item" data-view="client-bookings">
-                    <i data-lucide="calendar"></i>
-                    <span>Minhas Limpezas</span>
-                </a>
-            </nav>
-
-            <!-- Modals -->
-            <div id="booking-modal" class="modal hidden">
-                <div class="modal-content">
-                    <button class="close-modal" id="close-booking-modal"><i data-lucide="x"></i></button>
-                    <h3>Agendar Serviço</h3>
-                    <div id="service-select-container" class="input-group">
-                        <label>Serviço</label>
-                        <select id="booking-service-select" class="input-modern"></select>
-                    </div>
-                    <div id="client-select-container" class="input-group">
-                        <label>Cliente</label>
-                        <select id="booking-client-select" class="input-modern"></select>
-                    </div>
-                    <div class="input-group">
-                        <label>Data</label>
-                        <input type="date" id="booking-date" class="input-modern">
-                    </div>
-                    <div class="input-group">
-                        <label>Hora</label>
-                        <input type="time" id="booking-time" class="input-modern" value="09:00">
-                    </div>
-                    <div class="booking-notes" style="margin: 20px 0 10px; color: #6B7280; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="clock" style="width:16px; height:16px"></i> 
-                        <span>Horário: 08:00 - 17:00 (Seg-Sáb)</span>
-                    </div>
-                    <div id="booking-observations-container" style="margin-bottom:20px">
-                        <label>Observações do Pedido</label>
-                        <textarea id="booking-observations" class="input-modern" placeholder="Informações adicionais (ex: nº de divisões, animais, foco...)" rows="3"></textarea>
-                    </div>
-                    <div id="booking-address-container" style="margin-bottom:15px">
-                        <label>Morada da Limpeza</label>
-                        <textarea id="booking-address" class="input-modern" placeholder="Morada completa onde será efetuado o serviço" rows="2"></textarea>
-                    </div>
-                    <button id="confirm-booking" class="btn primary full-width">Confirmar</button>
-                </div>
-            </div>
-
-            <div id="client-modal" class="modal hidden">
-                <div class="modal-content">
-                    <button class="close-modal" id="close-client-modal-btn"><i data-lucide="x"></i></button>
-                    <h3 id="client-modal-title">Novo Cliente</h3>
-                    <input type="text" id="client-name" placeholder="Nome Completo" class="input-modern">
-                    <input type="text" id="client-contact" placeholder="Contacto Telefónico" class="input-modern">
-                    <input type="email" id="client-email" placeholder="Email" class="input-modern">
-                    <div id="password-group" class="input-group hidden">
-                        <label>Alterar Palavra-passe</label>
-                        <input type="text" id="client-password" placeholder="Nova palavra-passe" class="input-modern">
-                    </div>
-                    <input type="text" id="client-nif" placeholder="NIF" class="input-modern">
-                    <textarea id="client-address" placeholder="Morada Completa" class="input-modern" rows="3"></textarea>
-                    <button id="save-client-btn" class="btn primary full-width">Salvar</button>
-                </div>
-            </div>
-
-            <!-- Email Simulation Modal -->
-            <div id="email-modal" class="modal hidden">
-                <div class="modal-content email-style">
-                    <div id="email-sending-overlay" class="sending-overlay hidden">
-                        <div class="spinner"></div>
-                        <p>A enviar e-mail...</p>
-                    </div>
-                    <div id="email-sent-success" class="sent-success hidden">
-                        <i data-lucide="check-circle-2"></i>
-                        <p>Enviado com Sucesso!</p>
-                    </div>
-                    <div id="email-body-content" class="email-body">
-                        <!-- Content injected via JS -->
-                    </div>
-                    <button id="close-email-modal" class="btn primary full-width">Concluído</button>
-                </div>
-            </div>
-
-            <div id="admin-modal" class="modal hidden">
-                <div class="modal-content">
-                    <button class="close-modal" id="close-admin-modal-btn"><i data-lucide="x"></i></button>
-                    <h3 id="service-modal-title">Configurar Serviço</h3>
-                    <input type="text" id="admin-service-name" placeholder="Nome do Serviço" class="input-modern">
-                    <input type="number" id="admin-service-duration" placeholder="Duração (h)" class="input-modern">
-                    <input type="number" id="admin-service-price" placeholder="Preço (€)" class="input-modern">
-                    <div class="input-group checkbox-group">
-                        <input type="checkbox" id="admin-service-custom">
-                        <label for="admin-service-custom" style="display:inline">Preço Sob Orçamento (Personalizado)</label>
-                    </div>
-                    <textarea id="admin-service-desc" placeholder="O que está incluído neste serviço?" class="input-modern" rows="4"></textarea>
-                    <button id="save-service-btn" class="btn primary full-width">Gravar</button>
-                </div>
-            </div>
-
-            <!-- Service Info Modal -->
-            <div id="info-modal" class="modal hidden">
-                <div class="modal-content">
-                    <button class="close-modal" id="close-info-modal-btn"><i data-lucide="x"></i></button>
-                    <h3 id="info-modal-title">Detalhes do Serviço</h3>
-                    <div id="info-modal-body" class="service-details-content">
-                        <!-- Content injected via JS -->
-                    </div>
-                    <button id="close-info-btn" class="btn secondary full-width" style="margin-top:20px">Fechar</button>
-                </div>
-            </div>
-        </main>
     </div>
 
-    <!-- Success Toast -->
-    <div id="toast" class="toast hidden">
-        <div id="toast-icon-box">
-            <i data-lucide="check-circle" id="toast-icon"></i>
+    <!-- Main Content -->
+    <div id="main-content" class="hidden">
+        <header>
+            <div class="header-brand">
+                <i data-lucide="sparkles"></i>
+                <span>FastLimpezas</span>
+            </div>
+            <div class="header-actions">
+                <button id="edit-profile-btn" class="icon-btn hidden"><i data-lucide="user-cog"></i></button>
+                <button id="logout-btn" class="icon-btn red"><i data-lucide="log-out"></i></button>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="view-header">
+                <span class="badge-role" id="role-badge">Cliente</span>
+                <h2 id="view-title">Início</h2>
+            </div>
+
+            <!-- Client Views -->
+            <section id="client-view" class="hidden">
+                <div id="client-home-content">
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i data-lucide="check-circle"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Estado</span>
+                                <span class="stat-value" style="font-size: 16px;">Ligado ao Firebase</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="cleaning-types-grid" class="services-grid"></div>
+                </div>
+
+                <div id="client-bookings-content" class="hidden">
+                    <div id="my-bookings"></div>
+                </div>
+            </section>
+
+            <!-- Admin Views -->
+            <section id="admin-view" class="hidden">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="users"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Clientes</span>
+                            <span id="stat-clients-val" class="stat-value">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="calendar"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Reservas</span>
+                            <span id="stat-bookings-val" class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    Serviços Disponíveis
+                    <button id="add-service-btn" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                        <i data-lucide="plus"></i> Novo
+                    </button>
+                </h3>
+                <div id="admin-services-list"></div>
+
+                <h3 style="margin: 40px 0 20px; display: flex; justify-content: space-between; align-items: center;">
+                    Clientes Registados
+                    <button id="add-client-btn" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                        <i data-lucide="user-plus"></i> Novo
+                    </button>
+                </h3>
+                <div id="admin-clients-list"></div>
+            </section>
+
+            <section id="agenda-view" class="hidden">
+                <h3 style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    Agenda da Equipa
+                    <button id="admin-add-booking-btn" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                        <i data-lucide="calendar-plus"></i> Novo Agendamento
+                    </button>
+                </h3>
+                <div id="all-bookings-list"></div>
+            </section>
+        </main>
+
+        <!-- Navigation -->
+        <nav id="nav-admin" class="bottom-nav hidden">
+            <div class="nav-link active" data-view="admin">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Gestão</span>
+            </div>
+            <div class="nav-link" data-view="agenda">
+                <i data-lucide="calendar"></i>
+                <span>Agenda</span>
+            </div>
+        </nav>
+
+        <nav id="nav-client" class="bottom-nav hidden">
+            <div class="nav-link active" data-view="client">
+                <i data-lucide="sparkles"></i>
+                <span>Serviços</span>
+            </div>
+            <div class="nav-link" data-view="client-bookings">
+                <i data-lucide="calendar-check"></i>
+                <span>Minhas Limpezas</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="booking-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Agendar Limpeza</h3>
+                <button class="close-btn" id="close-booking-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div id="service-select-container" class="input-group">
+                <label>Serviço Pretendido</label>
+                <select id="booking-service-select" class="input-modern"></select>
+            </div>
+            <div id="client-select-container" class="input-group">
+                <label>Cliente</label>
+                <select id="booking-client-select" class="input-modern"></select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <label>Data</label>
+                    <input type="date" id="booking-date" class="input-modern">
+                </div>
+                <div class="input-group">
+                    <label>Hora</label>
+                    <input type="time" id="booking-time" class="input-modern" value="09:00">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Morada Local</label>
+                <textarea id="booking-address" class="input-modern" rows="2" placeholder="Ex: Rua das Flores nº 10, 2º Esq."></textarea>
+            </div>
+            <div class="input-group">
+                <label>Notas adicionais (Opcional)</label>
+                <textarea id="booking-observations" class="input-modern" rows="2" placeholder="Ex: Chave no tapete, cuidado com o gato..."></textarea>
+            </div>
+            <button id="confirm-booking" class="btn-primary">Confirmar Agendamento</button>
         </div>
+    </div>
+
+    <div id="client-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="client-modal-title">Novo Cliente</h3>
+                <button class="close-btn" id="close-client-modal-btn"><i data-lucide="x"></i></button>
+            </div>
+            <div class="input-group"><label>Nome Completo</label><input type="text" id="client-name" class="input-modern"></div>
+            <div class="input-group"><label>E-mail</label><input type="email" id="client-email" class="input-modern"></div>
+            <div class="input-group"><label>Contacto</label><input type="text" id="client-contact" class="input-modern"></div>
+            <div id="password-group" class="input-group hidden">
+                <label>Palavra-passe</label>
+                <input type="text" id="client-password" class="input-modern">
+            </div>
+            <div class="input-group"><label>NIF</label><input type="text" id="client-nif" class="input-modern"></div>
+            <div class="input-group"><label>Morada Base</label><textarea id="client-address" class="input-modern" rows="2"></textarea></div>
+            <button id="save-client-btn" class="btn-primary">Gravar Perfil</button>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="service-modal-title">Configurar Serviço</h3>
+                <button class="close-btn" id="close-admin-modal-btn"><i data-lucide="x"></i></button>
+            </div>
+            <div class="input-group"><label>Nome do Serviço</label><input type="text" id="admin-service-name" class="input-modern"></div>
+            <div class="input-group"><label>Preço Base (€)</label><input type="number" id="admin-service-price" class="input-modern"></div>
+            <div class="input-group" style="display:flex; gap:10px; align-items:center;">
+                <input type="checkbox" id="admin-service-custom" style="width:auto">
+                <label for="admin-service-custom" style="margin:0">Preço Sob Orçamento</label>
+            </div>
+            <div class="input-group"><label>Descrição do que está incluído</label><textarea id="admin-service-desc" class="input-modern" rows="4"></textarea></div>
+            <button id="save-service-btn" class="btn-primary">Guardar Serviço</button>
+        </div>
+    </div>
+
+    <div id="email-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div id="email-sending-overlay" class="hidden" style="text-align:center; padding: 40px;">
+                <p>A processar envio seguro...</p>
+            </div>
+            <div id="email-sent-success" class="hidden" style="text-align:center; color: var(--secondary); padding: 40px;">
+                <i data-lucide="check-circle" style="width:48px; height:48px; margin-bottom:10px"></i>
+                <p>E-mail Enviado!</p>
+            </div>
+            <div id="email-body-content" class="email-body"></div>
+            <button id="close-email-modal" class="btn-primary">Fechar Notificação</button>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden">
+        <i data-lucide="check-circle" style="width:18px; height:18px"></i>
         <span id="toast-msg">Sucesso!</span>
     </div>
 
