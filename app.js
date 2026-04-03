@@ -240,8 +240,12 @@ function renderGlobalAgenda() {
         `;
         const pBtn = item.querySelector('.set-p');
         if(pBtn) pBtn.onclick = async () => {
-            const p = prompt('Preço final?');
-            if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
+            const p = prompt('Preço final (£)?');
+            if(p) {
+                const updated = { ...b, status: 'Aguardando Cliente', finalPrice: p };
+                await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
+                showPriceProposedEmail(updated);
+            }
         };
         item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
         list.appendChild(item);
@@ -252,16 +256,23 @@ function renderGlobalAgenda() {
 function openServiceModal(s = null) {
     state.editingServiceId = s ? s.id : null;
     document.getElementById('admin-service-name').value = s ? s.name : '';
-    document.getElementById('admin-service-price').value = s ? s.price : '';
-    document.getElementById('admin-service-desc').value = s ? s.desc : '';
+    document.getElementById('admin-service-price').value = s ? (s.price || '') : '';
+    document.getElementById('admin-service-desc').value = s ? (s.desc || '') : '';
+    document.getElementById('admin-service-custom').checked = s?.isCustom || false;
     document.getElementById('admin-modal').classList.remove('hidden');
 }
 
 async function saveService() {
-    const data = { name: document.getElementById('admin-service-name').value, price: document.getElementById('admin-service-price').value, desc: document.getElementById('admin-service-desc').value };
+    const data = { 
+        name: document.getElementById('admin-service-name').value, 
+        price: document.getElementById('admin-service-price').value, 
+        desc: document.getElementById('admin-service-desc').value,
+        isCustom: document.getElementById('admin-service-custom').checked
+    };
     if(state.editingServiceId) await update(ref(db, "services/" + state.editingServiceId), data);
     else await push(ref(db, "services"), data);
     document.getElementById('admin-modal').classList.add('hidden');
+    showToast('Serviço Configurado!');
 }
 
 function openClientModal(c = null) {
@@ -277,36 +288,51 @@ function openClientModal(c = null) {
 }
 
 async function saveClient() {
+    const pass = document.getElementById('client-password')?.value || Math.random().toString(36).slice(-6).toUpperCase();
+    const email = document.getElementById('client-email').value;
     const data = { 
         name: document.getElementById('client-name').value, 
-        email: document.getElementById('client-email').value,
+        email: email,
         contact: document.getElementById('client-contact').value,
         nif: document.getElementById('client-nif').value,
         address: document.getElementById('client-address').value,
-        password: document.getElementById('client-password')?.value || Math.random().toString(36).slice(-6).toUpperCase(),
+        password: pass,
         role: 'client'
     };
-    if(state.editingClientId) await update(ref(db, "clients/" + state.editingClientId), data);
-    else await push(ref(db, "clients"), data);
+    if(state.editingClientId) {
+        await update(ref(db, "clients/" + state.editingClientId), data);
+    } else {
+        await push(ref(db, "clients"), data);
+        showWelcomeEmail(email, pass);
+    }
     document.getElementById('client-modal').classList.add('hidden');
+    showToast('Cliente Salvo!');
 }
 
-function openBookingModal(s = null) {
-    const sS = document.getElementById('booking-service-select');
-    const cS = document.getElementById('booking-client-select');
-    sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
-    cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
-    if(s) sS.value = s.id;
-    const addrField = document.getElementById('booking-address');
-    if(state.currentUser.role === 'client') {
-        document.getElementById('client-select-container').classList.add('hidden');
-        cS.value = state.currentUser.id;
-        if(state.currentUser.address) addrField.value = state.currentUser.address;
-    } else {
-        document.getElementById('client-select-container').classList.remove('hidden');
-    }
-    document.getElementById('booking-modal').classList.remove('hidden');
+function triggerEmailSimulation(content) {
+    const body = document.getElementById('email-body-content');
+    const overlay = document.getElementById('email-sending-overlay');
+    const success = document.getElementById('email-sent-success');
+    const closeBtn = document.getElementById('close-email-modal');
+    if(!body) return;
+    body.innerHTML = content;
+    overlay.classList.remove('hidden');
+    success.classList.add('hidden');
+    closeBtn.classList.add('hidden');
+    document.getElementById('email-modal').classList.remove('hidden');
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        success.classList.remove('hidden');
+        setTimeout(() => {
+            success.classList.add('hidden');
+            closeBtn.classList.remove('hidden');
+        }, 1200);
+    }, 1500);
 }
+
+function showWelcomeEmail(e, p) { triggerEmailSimulation(`<h3>Bem-vindo à FastLimpezas</h3><p>Para: ${e}</p><hr><p>A sua conta foi criada com sucesso.</p><div class="credentials-box"><p>Email: <strong>${e}</strong></p><p>Senha: <strong>${p}</strong></p></div>`); }
+function showNewBookingEmail(bk) { triggerEmailSimulation(`<h3>Confirmação de Pedido</h3><p>Confirmamos a receção do seu pedido de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong>.</p><p>A nossa equipa irá validar o agendamento em breve.</p>`); }
+function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza.</p><hr><p>Pode aceitar ou propor alterações através da aplicação.</p>`); }
 
 async function handleBookingSubmit() {
     const sid = document.getElementById('booking-service-select').value;
@@ -323,7 +349,7 @@ async function handleBookingSubmit() {
     };
     await push(ref(db, "bookings"), data);
     document.getElementById('booking-modal').classList.add('hidden');
-    showToast('Agendado!');
+    showNewBookingEmail(data);
 }
 
 function showToast(m) {
