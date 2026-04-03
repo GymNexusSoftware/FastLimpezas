@@ -297,8 +297,27 @@ async function saveService() {
 
 function openBookingModal(s = null) {
     const sS = document.getElementById('booking-service-select');
+    const cS = document.getElementById('booking-client-select');
+    
+    // Popular Dropdowns
     sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
+    cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
+    
     if(s) sS.value = s.id;
+    
+    const addrField = document.getElementById('booking-address');
+    const obsField = document.getElementById('booking-observations');
+    if(addrField) addrField.value = '';
+    if(obsField) obsField.value = '';
+
+    if(state.currentUser.role === 'client') {
+        document.getElementById('client-select-container').classList.add('hidden');
+        cS.value = state.currentUser.id;
+        if(state.currentUser.address) addrField.value = state.currentUser.address;
+    } else {
+        document.getElementById('client-select-container').classList.remove('hidden');
+    }
+    
     bookingModal().classList.remove('hidden');
 }
 
@@ -307,14 +326,37 @@ async function handleBookingSubmit() {
     try {
         btn.disabled = true;
         const sid = document.getElementById('booking-service-select').value;
+        const cid = document.getElementById('booking-client-select').value;
         const d = document.getElementById('booking-date').value;
         const t = document.getElementById('booking-time').value;
+        const o = document.getElementById('booking-observations').value;
+        const a = document.getElementById('booking-address').value;
+        
+        if(!d || !a) throw new Error('Data e Morada!');
+        
         const s = state.cleaningTypes.find(tp => String(tp.id) === String(sid));
-        const data = { serviceName: s.name, clientName: state.currentUser.name, clientEmail: state.currentUser.email, date: d, time: t, status: 'Pendente', timestamp: Date.now() };
+        const c = state.clients.find(cl => String(cl.id) === String(cid));
+        
+        const data = { 
+            serviceName: s.name, 
+            clientName: c.name, 
+            clientEmail: c.email, 
+            date: d, 
+            time: t, 
+            status: 'Pendente', 
+            observations: o || '', 
+            address: a,
+            timestamp: Date.now() 
+        };
+        
         await push(ref(db, "bookings"), data);
         bookingModal().classList.add('hidden');
-        showToast('Enviado!');
-    } catch (e) { showToast('Erro!', 'error'); } finally { btn.disabled = false; }
+        showToast('Pedido Enviado!');
+    } catch (e) { 
+        showToast(e.message || 'Erro!', 'error'); 
+    } finally { 
+        btn.disabled = false; 
+    }
 }
 
 function openClientModal(c = null) {
