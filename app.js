@@ -1,19 +1,31 @@
-// Initial State - V11
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, setDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-analytics.js";
+
+// --- CONFIGURAÇÃO DO FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBa4OaHmPLLJlg6I1O3lX24ENsmZJU2NEo",
+  authDomain: "fastlimpezas-fc27a.firebaseapp.com",
+  projectId: "fastlimpezas-fc27a",
+  storageBucket: "fastlimpezas-fc27a.firebasestorage.app",
+  messagingSenderId: "104504126644",
+  appId: "1:104504126644:web:aee99346225c12d7e23be1",
+  measurementId: "G-QP7G6RMTX4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const analytics = getAnalytics(app);
+
+// Initial State - V11 (Now synced with Firestore)
 let state = {
     currentUser: null, 
     activeView: 'admin', 
     editingClientId: null,
     editingServiceId: null,
-    cleaningTypes: [
-        { id: 1, name: 'Limpeza Standard', price: 0, desc: 'Limpeza geral de manutenção. Inclui aspirar, lavar chão e pó em superfícies acessíveis.', isCustom: true },
-        { id: 2, name: 'Limpeza Profunda', price: 0, desc: 'Limpeza detalhada. Inclui interior de armários vazios, rodapés, caixilhos e desinfetagem profunda.', isCustom: true },
-        { id: 3, name: 'Limpeza Vidros', price: 0, desc: 'Limpeza de vidros e janelas (interior e exterior acessível).', isCustom: true },
-        { id: 4, name: 'Limpeza Pós-Obra', price: 0, desc: 'Limpeza técnica profunda após obras. Remove restos de tinta, cimento e pó fino acumulado.', isCustom: true }
-    ],
+    cleaningTypes: [],
     bookings: [],
-    clients: [
-        { id: 10, name: 'Maria Silva', email: 'cliente@email.com', contact: '912345678', password: 'samba', role: 'client', address: 'Rua Principal 123, Lisboa' }
-    ]
+    clients: []
 };
 
 // --- Selectors ---
@@ -32,8 +44,8 @@ const adminModal = () => document.getElementById('admin-modal');
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    loadFromLocalStorage();
-    lucide.createIcons();
+    initFirebaseSync();
+    window.lucide.createIcons();
     initEventListeners();
     const today = new Date().toISOString().split('T')[0];
     const dIn = document.getElementById('booking-date');
@@ -41,14 +53,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const saved = sessionStorage.getItem('cleaning-session');
     if (saved) {
         const u = JSON.parse(saved);
-        if (u.role === 'client') {
-            const f = state.clients.find(c => c.id === u.id);
-            if(f) state.currentUser = { ...f, role: 'client' };
-            else { sessionStorage.removeItem('cleaning-session'); location.reload(); }
-        } else state.currentUser = u;
+        state.currentUser = u;
         loginSuccess();
     }
 });
+
+function initFirebaseSync() {
+    // Sync Services
+    onSnapshot(collection(db, "services"), (snapshot) => {
+        state.cleaningTypes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (state.cleaningTypes.length === 0) seedInitialServices();
+        renderAdminServices();
+        if(state.activeView === 'client') renderClientView();
+    });
+
+    // Sync Clients
+    onSnapshot(collection(db, "clients"), (snapshot) => {
+        state.clients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        updateStats();
+        renderAdminClients();
+    });
+
+    // Sync Bookings
+    onSnapshot(collection(db, "bookings"), (snapshot) => {
+        state.bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if(state.activeView === 'agenda') renderGlobalAgenda();
+        if(state.activeView === 'client' || state.activeView === 'client-bookings') renderClientView();
+    });
+}
+
+// Create initial services if DB is empty
+async function seedInitialServices() {
+    const initial = [
+        { name: 'Limpeza Standard', price: 0, desc: 'Limpeza geral de manutenção.', isCustom: true },
+        { name: 'Limpeza Profunda', price: 0, desc: 'Limpeza detalhada.', isCustom: true },
+        { name: 'Limpeza Vidros', price: 0, desc: 'Limpeza de vidros.', isCustom: true },
+        { name: 'Limpeza Pós-Obra', price: 0, desc: 'Limpeza técnica profunda.', isCustom: true }
+    ];
+    for (const s of initial) await addDoc(collection(db, "services"), s);
+}
 
 function initEventListeners() {
     document.getElementById('login-form').onsubmit = handleLogin;
@@ -84,7 +127,7 @@ function handleLogin(e) {
     e.preventDefault();
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value.trim();
-    if (u === 'admin' && p === 'admin123') state.currentUser = { id: 1, role: 'admin', name: 'Administrador' };
+    if (u === 'admin' && p === 'admin123') state.currentUser = { id: 'admin', role: 'admin', name: 'Administrador' };
     else {
         const c = state.clients.find(cl => cl.email === u && cl.password === p);
         if (c) state.currentUser = { ...c, role: 'client' };
@@ -98,14 +141,9 @@ function loginSuccess() {
     if(!state.currentUser) return;
     loginScreen().classList.add('hidden');
     mainContent().classList.remove('hidden');
-    
-    // NAVIGATION VISIBILITY
     document.getElementById('nav-admin').classList.toggle('hidden', state.currentUser.role !== 'admin');
     document.getElementById('nav-client').classList.toggle('hidden', state.currentUser.role === 'admin');
-    
-    // PROFILE EDIT VISIBILITY (ONLY FOR CLIENTS)
     document.getElementById('edit-profile-btn').classList.toggle('hidden', state.currentUser.role === 'admin');
-    
     if (state.currentUser.role === 'admin') switchView('admin'); else switchView('client');
 }
 
@@ -135,7 +173,7 @@ function switchView(view) {
         roleBadge().textContent = 'Cliente';
         renderClientView();
     }
-    lucide.createIcons();
+    window.lucide.createIcons();
     updateStats();
 }
 
@@ -158,16 +196,12 @@ function renderAdminServices() {
             </div>
         `;
         item.querySelector('.edit-service-btn').onclick = () => openServiceModal(s);
-        item.querySelector('.delete-service-btn').onclick = () => {
-             if(confirm(`Eliminar serviço ${s.name}?`)) {
-                 state.cleaningTypes = state.cleaningTypes.filter(tp => tp.id !== s.id);
-                 saveToLocalStorage();
-                 renderAdminServices();
-             }
+        item.querySelector('.delete-service-btn').onclick = async () => {
+             if(confirm(`Eliminar serviço ${s.name}?`)) await deleteDoc(doc(db, "services", s.id));
         };
         list.appendChild(item);
     });
-    lucide.createIcons();
+    window.lucide.createIcons();
 }
 
 function renderAdminClients() {
@@ -183,17 +217,12 @@ function renderAdminClients() {
             </div>
         `;
         item.querySelector('.edit-client-action').onclick = () => openClientModal(c);
-        item.querySelector('.delete-client-action').onclick = () => {
-             if(confirm(`Eliminar cliente ${c.name}?`)) {
-                 state.clients = state.clients.filter(cl => cl.id !== c.id);
-                 saveToLocalStorage();
-                 renderAdminClients();
-                 updateStats();
-             }
+        item.querySelector('.delete-client-action').onclick = async () => {
+             if(confirm(`Eliminar cliente ${c.name}?`)) await deleteDoc(doc(db, "clients", c.id));
         };
         list.appendChild(item);
     });
-    lucide.createIcons();
+    window.lucide.createIcons();
 }
 
 function renderGlobalAgenda() {
@@ -217,28 +246,22 @@ function renderGlobalAgenda() {
             </div>
         `;
         const cBtn = item.querySelector('.confirm-action');
-        if(cBtn) cBtn.onclick = () => {
+        if(cBtn) cBtn.onclick = async () => {
              const price = prompt("Indique o valor para este serviço (€):", "35");
              if(price !== null && price !== "") {
-                 const idx = state.bookings.findIndex(bk => bk.id === b.id);
-                 state.bookings[idx].status = 'Aguardando Cliente';
-                 state.bookings[idx].finalPrice = price;
-                 saveToLocalStorage();
-                 renderGlobalAgenda();
-                 showPriceProposedEmail(state.bookings[idx]);
+                 await updateDoc(doc(db, "bookings", b.id), { status: 'Aguardando Cliente', finalPrice: price });
+                 showPriceProposedEmail({ ...b, finalPrice: price });
              }
         };
-        item.querySelector('.del-b').onclick = () => {
+        item.querySelector('.del-b').onclick = async () => {
              if(confirm('Cancelar agendamento?')) {
                  showCancellationEmail(b, 'client');
-                 state.bookings = state.bookings.filter(bk => bk.id !== b.id);
-                 saveToLocalStorage();
-                 renderGlobalAgenda();
+                 await deleteDoc(doc(db, "bookings", b.id));
              }
         };
         list.appendChild(item);
     });
-    lucide.createIcons();
+    window.lucide.createIcons();
 }
 
 function renderClientView() {
@@ -260,7 +283,7 @@ function renderClientView() {
     }
     const myList = document.getElementById('my-bookings'); if(myList) {
         myList.innerHTML = '';
-        state.bookings.filter(b => b.clientEmail === state.currentUser.email).forEach(b => {
+        state.bookings.filter(b => b.clientEmail === state.currentUser?.email).forEach(b => {
              const item = document.createElement('div');
              item.className = 'booking-item';
              let statusText = b.status;
@@ -284,37 +307,29 @@ function renderClientView() {
              const accBtn = item.querySelector('.accept-btn');
              const rejBtn = item.querySelector('.reject-btn');
              
-             if(accBtn) accBtn.onclick = () => {
-                 const idx = state.bookings.findIndex(bk => bk.id === b.id);
-                 state.bookings[idx].status = 'Confirmado';
-                 saveToLocalStorage();
-                 renderClientView();
+             if(accBtn) accBtn.onclick = async () => {
+                 await updateDoc(doc(db, "bookings", b.id), { status: 'Confirmado' });
                  showToast('Serviço Confirmado!');
-                 showFinalConfirmationAdminEmail(state.bookings[idx]);
+                 showFinalConfirmationAdminEmail(b);
              };
              
-             if(rejBtn) rejBtn.onclick = () => {
+             if(rejBtn) rejBtn.onclick = async () => {
                  if(confirm('Deseja rejeitar este valor e cancelar o pedido?')) {
-                     const idx = state.bookings.findIndex(bk => bk.id === b.id);
-                     state.bookings[idx].status = 'Rejeitado';
-                     saveToLocalStorage();
-                     renderClientView();
-                     showRejectionAdminEmail(state.bookings[idx]);
+                     await updateDoc(doc(db, "bookings", b.id), { status: 'Rejeitado' });
+                     showRejectionAdminEmail(b);
                  }
              };
 
-             item.querySelector('.delete-client-booking').onclick = () => {
+             item.querySelector('.delete-client-booking').onclick = async () => {
                 if(confirm('Anular esta limpeza?')) {
                     showCancellationEmail(b, 'admin');
-                    state.bookings = state.bookings.filter(bk => bk.id !== b.id);
-                    saveToLocalStorage();
-                    renderClientView();
+                    await deleteDoc(doc(db, "bookings", b.id));
                 }
              };
              myList.appendChild(item);
         });
     }
-    lucide.createIcons();
+    window.lucide.createIcons();
 }
 
 function showServiceInfo(service) {
@@ -333,16 +348,16 @@ function openServiceModal(s = null) {
     adminModal().classList.remove('hidden');
 }
 
-function saveService() {
+async function saveService() {
     const n = document.getElementById('admin-service-name').value;
     const p = parseFloat(document.getElementById('admin-service-price').value) || 0;
     const d = document.getElementById('admin-service-desc').value;
     const c = document.getElementById('admin-service-custom').checked;
-    if(!n) return showToast('Nome!');
-    const s = { id: state.editingServiceId || Date.now(), name: n, price: p, desc: d, isCustom: c };
-    if(state.editingServiceId) state.cleaningTypes[state.cleaningTypes.findIndex(tp => tp.id === state.editingServiceId)] = s;
-    else state.cleaningTypes.push(s);
-    saveToLocalStorage(); adminModal().classList.add('hidden'); renderAdminServices();
+    if(!n) return showToast('Nome!', 'error');
+    const sData = { name: n, price: p, desc: d, isCustom: c };
+    if(state.editingServiceId) await updateDoc(doc(db, "services", state.editingServiceId), sData);
+    else await addDoc(collection(db, "services"), sData);
+    adminModal().classList.add('hidden');
 }
 
 function openBookingModal(s = null) {
@@ -364,81 +379,53 @@ function openBookingModal(s = null) {
     bookingModal().classList.remove('hidden');
 }
 
-function handleBookingSubmit() {
+async function handleBookingSubmit() {
     const sid = document.getElementById('booking-service-select').value;
     const d = document.getElementById('booking-date').value;
     const t = document.getElementById('booking-time').value;
     const o = document.getElementById('booking-observations').value;
     const a = document.getElementById('booking-address').value;
-    if(!d || !a) return showToast('Preecha Data e Morada!');
+    if(!d || !a) return showToast('Preencha Data e Morada!', 'error');
     const s = state.cleaningTypes.find(tp => String(tp.id) === String(sid));
     const cid = document.getElementById('booking-client-select').value;
     const c = state.clients.find(cl => String(cl.id) === String(cid));
-    state.bookings.push({
-        id: Date.now(), serviceName: s.name, clientName: c.name, clientEmail: c.email, date: d, time: t, status: 'Pendente', 
-        finalPrice: null, observations: o, address: a
-    });
-    saveToLocalStorage(); bookingModal().classList.add('hidden'); 
-    if(state.currentUser.role === 'client') renderClientView(); else renderGlobalAgenda();
+    const bData = {
+        serviceName: s.name, clientName: c.name, clientEmail: c.email, date: d, time: t, status: 'Pendente', 
+        finalPrice: null, observations: o, address: a, timestamp: Date.now()
+    };
+    await addDoc(collection(db, "bookings"), bData);
+    bookingModal().classList.add('hidden'); 
     showToast('Pedido enviado!');
-    showNewBookingAdminEmail(state.bookings[state.bookings.length - 1]);
+    showNewBookingAdminEmail(bData);
 }
 
 function triggerEmailSimulation(content) {
+    const body = document.getElementById('email-body-content');
     const overlay = document.getElementById('email-sending-overlay');
     const success = document.getElementById('email-sent-success');
-    const body = document.getElementById('email-body-content');
     const closeBtn = document.getElementById('close-email-modal');
-    
-    // Reset state
     body.innerHTML = content;
     overlay.classList.remove('hidden');
     success.classList.add('hidden');
     closeBtn.classList.add('hidden');
     emailModal().classList.remove('hidden');
-    
-    // Phase 1: Sending (1.5s)
     setTimeout(() => {
         overlay.classList.add('hidden');
         success.classList.remove('hidden');
-        
-        // Phase 2: Show Success (1s)
         setTimeout(() => {
             success.classList.add('hidden');
             closeBtn.classList.remove('hidden');
-            lucide.createIcons();
+            window.lucide.createIcons();
         }, 1200);
-        
     }, 1500);
 }
 
-function showPriceProposedEmail(bk) {
-    triggerEmailSimulation(`<h3>Orçamento Disponível</h3><p>De: <strong>fastlimpezas@gmail.com</strong></p><p>Para: ${bk.clientEmail}</p><hr><p>Para o serviço ${bk.serviceName} em ${bk.date}, propomos o valor de <strong>${bk.finalPrice}€</strong>.</p><p>Por favor, aceda à sua área de cliente para aceitar ou rejeitar este valor.</p>`);
-}
-
-function showConfirmationEmail(bk) {
-    triggerEmailSimulation(`<h3>Limpeza Confirmada</h3><p>De: <strong>fastlimpezas@gmail.com</strong></p><p>Para: ${bk.clientEmail}</p><hr><p>O serviço ${bk.serviceName} em ${bk.date} na morada <strong>${bk.address}</strong> está confirmado por ${bk.finalPrice}€.</p>`);
-}
-
-function showWelcomeEmail(e, p) {
-    triggerEmailSimulation(`<p>De: <strong>fastlimpezas@gmail.com</strong></p><p>Bem-vindo à FastLimpezas!</p><div class="credentials-box"><p>Utilizador: <strong>${e}</strong></p><p>Palavra-passe: <strong>${p}</strong></p></div>`);
-}
-
-function showCancellationEmail(bk, t) {
-    triggerEmailSimulation(`<p>De: <strong>fastlimpezas@gmail.com</strong></p><hr><p>${t === 'client' ? 'Lamentamos, mas o serviço foi cancelado.' : 'Informamos que o cliente cancelou o serviço.'}</p>`);
-}
-
-function showNewBookingAdminEmail(bk) {
-    triggerEmailSimulation(`<h3>Novo Pedido de Limpeza</h3><p>Para: <strong>Administrador (fastlimpezas@gmail.com)</strong></p><hr><p>O cliente <strong>${bk.clientName}</strong> solicitou um serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> às <strong>${bk.time}</strong>.</p><p>Por favor, defina o orçamento na sua área de gestão.</p>`);
-}
-
-function showFinalConfirmationAdminEmail(bk) {
-    triggerEmailSimulation(`<h3>Orçamento Aceite</h3><p>Para: <strong>Administrador (fastlimpezas@gmail.com)</strong></p><hr><p>O cliente <strong>${bk.clientName}</strong> ACEITOU o valor de <strong>${bk.finalPrice}€</strong> para o serviço de <strong>${bk.serviceName}</strong> em <strong>${bk.date}</strong>.</p><p>O agendamento está agora oficialmente CONFIRMADO.</p>`);
-}
-
-function showRejectionAdminEmail(bk) {
-    triggerEmailSimulation(`<h3>Valor Rejeitado</h3><p>Para: <strong>Administrador (fastlimpezas@gmail.com)</strong></p><hr><p>O cliente <strong>${bk.clientName}</strong> REJEITOU o valor de <strong>${bk.finalPrice}€</strong> proposto para o serviço de <strong>${bk.serviceName}</strong> em <strong>${bk.date}</strong>.</p><p>O pedido foi cancelado automaticamente.</p>`);
-}
+function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Disponível</h3><p>Para: ${bk.clientEmail}</p><hr><p>Para o serviço ${bk.serviceName} propomos o valor de <strong>${bk.finalPrice}€</strong>.</p>`); }
+function showWelcomeEmail(e, p) { triggerEmailSimulation(`<p>Bem-vindo à FastLimpezas!</p><div style="background:#f3f4f6; padding:15px; border-radius:8px; margin:10px 0"><p>Utilizador: <strong>${e}</strong></p><p>Palavra-passe: <strong>${p}</strong></p></div>`); }
+function showCancellationEmail(bk, t) { triggerEmailSimulation(`<p>De: fastlimpezas@gmail.com</p><hr><p>${t === 'client' ? 'Serviço cancelado.' : 'O cliente cancelou o serviço.'}</p>`); }
+function showNewBookingAdminEmail(bk) { triggerEmailSimulation(`<h3>Novo Pedido</h3><p>O cliente <strong>${bk.clientName}</strong> solicitou <strong>${bk.serviceName}</strong> para <strong>${bk.date}</strong>.</p>`); }
+function showFinalConfirmationAdminEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Aceite</h3><p>O cliente <strong>${bk.clientName}</strong> ACEITOU o valor de <strong>${bk.finalPrice}€</strong>.</p>`); }
+function showRejectionAdminEmail(bk) { triggerEmailSimulation(`<h3>Valor Rejeitado</h3><p>O cliente <strong>${bk.clientName}</strong> REJEITOU o valor proposto.</p>`); }
 
 function openClientModal(c = null) {
     state.editingClientId = c ? c.id : null;
@@ -460,28 +447,28 @@ function openClientModal(c = null) {
     clientModal().classList.remove('hidden');
 }
 
-function saveClient() {
+async function saveClient() {
     const n = document.getElementById('client-name').value;
     const e = document.getElementById('client-email').value;
-    if(!n || !e) return showToast('Preencha os campos!');
+    if(!n || !e) return showToast('Preencha os campos!', 'error');
     const contact = document.getElementById('client-contact').value;
     const nif = document.getElementById('client-nif').value;
     const address = document.getElementById('client-address').value;
+    const pass = document.getElementById('client-password').value || Math.random().toString(36).slice(-6).toUpperCase();
+    
+    const cData = { name: n, email: e, contact, nif, address, password: pass, role: 'client' };
+    
     if(state.editingClientId) {
-        const idx = state.clients.findIndex(cl => cl.id === state.editingClientId);
-        const pass = document.getElementById('client-password').value;
-        state.clients[idx] = { ...state.clients[idx], name: n, email: e, contact, nif, address, password: pass };
+        await updateDoc(doc(db, "clients", state.editingClientId), cData);
         if (state.currentUser && state.currentUser.id === state.editingClientId) {
-            state.currentUser = { ...state.clients[idx], role: 'client' };
+            state.currentUser = { ...cData, id: state.editingClientId };
             sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
         }
     } else {
-        const randPass = Math.random().toString(36).slice(-6).toUpperCase();
-        state.clients.push({ id: Date.now(), name: n, email: e, contact, nif, address, password: randPass, role: 'client' });
-        showWelcomeEmail(e, randPass);
+        await addDoc(collection(db, "clients"), cData);
+        showWelcomeEmail(e, pass);
     }
-    saveToLocalStorage(); clientModal().classList.add('hidden'); 
-    if(state.currentUser && state.currentUser.role === 'admin') renderAdminClients(); else switchView('client'); 
+    clientModal().classList.add('hidden'); 
     showToast('Guardado!');
 }
 
@@ -489,11 +476,9 @@ function showToast(m, type = 'success') {
     const t = document.getElementById('toast');
     const msg = document.getElementById('toast-msg');
     const icon = document.getElementById('toast-icon');
-    
     msg.textContent = m;
     icon.setAttribute('data-lucide', type === 'success' ? 'check-circle' : 'alert-circle');
-    lucide.createIcons();
-    
+    window.lucide.createIcons();
     t.classList.remove('hidden');
     setTimeout(() => {
         t.style.opacity = '0';
@@ -504,15 +489,4 @@ function showToast(m, type = 'success') {
             t.style.transform = '';
         }, 500);
     }, 3000);
-}
-
-function saveToLocalStorage() { localStorage.setItem('cleaning-app-v11', JSON.stringify({ cleaningTypes: state.cleaningTypes, bookings: state.bookings, clients: state.clients })); }
-function loadFromLocalStorage() {
-    const s = localStorage.getItem('cleaning-app-v11');
-    if(s) {
-        const p = JSON.parse(s);
-        state.cleaningTypes = p.cleaningTypes || state.cleaningTypes;
-        state.bookings = p.bookings || [];
-        state.clients = p.clients || state.clients;
-    }
 }
