@@ -21,9 +21,11 @@ body { background-color: #f0f0f0; display: flex; justify-content: center; min-he
 .mobile-frame {
     width: 100%;
     max-width: 450px;
-    height: 100vh;
+    height: 100dvh; /* Altura dinâmica para mobile */
     background-color: var(--bg-white);
     position: relative;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     box-shadow: 0 0 50px rgba(0,0,0,0.1);
 }
