@@ -134,7 +134,6 @@ function initEventListeners() {
     document.getElementById('close-admin-modal-btn').onclick = () => adminModal().classList.add('hidden');
     document.getElementById('close-client-modal-btn').onclick = () => clientModal().classList.add('hidden');
     document.getElementById('close-email-modal').onclick = () => emailModal().classList.add('hidden');
-    document.getElementById('close-info-modal-btn')?.addEventListener('click', () => infoModal()?.classList.add('hidden'));
     document.getElementById('add-service-btn').onclick = () => openServiceModal();
     document.getElementById('add-client-btn').onclick = () => openClientModal();
     document.getElementById('admin-add-booking-btn').onclick = () => openBookingModal();
@@ -142,13 +141,11 @@ function initEventListeners() {
     document.getElementById('save-client-btn').onclick = saveClient;
     document.getElementById('confirm-booking').onclick = handleBookingSubmit;
     
-    document.querySelectorAll('.nav-link').forEach(item => {
+    document.querySelectorAll('.tab-item').forEach(item => {
         item.onclick = (e) => {
             e.preventDefault();
-            const view = item.dataset.view;
-            switchView(view);
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
+            const v = item.dataset.view;
+            switchView(v);
         };
     });
 }
@@ -161,7 +158,7 @@ function handleLogin(e) {
     else {
         const c = state.clients.find(cl => cl.email === u && cl.password === p);
         if (c) state.currentUser = { ...c, role: 'client' };
-        else return showToast('Login Inválido!', 'error');
+        else return showToast('Login Falhou!', 'error');
     }
     sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
     loginSuccess();
@@ -174,7 +171,16 @@ function loginSuccess() {
     document.getElementById('nav-admin').classList.toggle('hidden', state.currentUser.role !== 'admin');
     document.getElementById('nav-client').classList.toggle('hidden', state.currentUser.role === 'admin');
     document.getElementById('edit-profile-btn').classList.toggle('hidden', state.currentUser.role === 'admin');
-    if (state.currentUser.role === 'admin') switchView('admin'); else switchView('client');
+    
+    if (state.currentUser.role === 'admin') {
+        document.getElementById('role-label').textContent = 'Admin Especialista';
+        document.getElementById('welcome-msg').textContent = 'Bem-vindo à Gestão Digital';
+        switchView('admin');
+    } else {
+        document.getElementById('role-label').textContent = 'Estimado Cliente';
+        document.getElementById('welcome-msg').textContent = `Olá, ${state.currentUser.name.split(' ')[0]}`;
+        switchView('client');
+    }
 }
 
 function logout() { sessionStorage.removeItem('cleaning-session'); location.reload(); }
@@ -185,27 +191,19 @@ function switchView(view) {
     document.getElementById('agenda-view').classList.add('hidden');
     document.getElementById('client-view').classList.add('hidden');
     
-    // Reset active states in both navs
-    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-    const activeLink = document.querySelector(`.nav-link[data-view="${view}"]`);
-    if(activeLink) activeLink.classList.add('active');
+    document.querySelectorAll('.tab-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
 
     if (view === 'admin') {
         renderAdminServices();
         renderAdminClients();
         document.getElementById('admin-view').classList.remove('hidden');
-        roleBadge().textContent = 'Admin';
-        viewTitle().textContent = 'Painel de Gestão';
     } else if (view === 'agenda') {
         renderGlobalAgenda();
         document.getElementById('agenda-view').classList.remove('hidden');
-        viewTitle().textContent = 'Agenda Global';
     } else {
         document.getElementById('client-view').classList.remove('hidden');
         document.getElementById('client-home-content').classList.toggle('hidden', view !== 'client');
         document.getElementById('client-bookings-content').classList.toggle('hidden', view !== 'client-bookings');
-        viewTitle().textContent = view === 'client' ? 'Nossos Serviços' : 'As Minhas Limpezas';
-        roleBadge().textContent = 'Portal Cliente';
         renderClientView();
     }
     window.lucide.createIcons();
@@ -227,15 +225,15 @@ function renderAdminServices() {
         item.innerHTML = `
             <div class="admin-info">
                 <h4>${s.name}</h4>
-                <p>${s.isCustom ? 'Sob Orçamento' : s.price + '€'}</p>
+                <p>Valor: ${s.isCustom ? 'Orçamental' : s.price + '€'}</p>
             </div>
             <div class="admin-actions">
-                <button class="icon-btn edit-s"><i data-lucide="edit-3"></i></button>
-                <button class="icon-btn del-s red"><i data-lucide="trash-2"></i></button>
+                <button class="icon-btn-bg edit-s"><i data-lucide="edit-3" style="width:18px;"></i></button>
+                <button class="icon-btn-bg del-s red"><i data-lucide="trash-2" style="width:18px;"></i></button>
             </div>
         `;
         item.querySelector('.edit-s').onclick = () => openServiceModal(s);
-        item.querySelector('.del-s').onclick = async () => { if(confirm('Deseja eliminar este serviço?')) await remove(ref(db, "services/" + s.id)); };
+        item.querySelector('.del-s').onclick = async () => { if(confirm('Eliminar serviço?')) await remove(ref(db, "services/" + s.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
@@ -301,16 +299,14 @@ function renderClientView() {
             const card = document.createElement('div');
             card.className = 'service-card-modern';
             card.innerHTML = `
-                <div class="service-tag">${s.isCustom ? 'Sob Consulta' : 'Preço Fixo'}</div>
-                <div class="card-icon-container">
-                    <i data-lucide="sparkles"></i>
-                </div>
+                <div class="service-tag">${s.isCustom ? 'Orçamental' : 'Preço Fixo'}</div>
+                <div class="service-icon"><i data-lucide="sparkles"></i></div>
                 <div class="card-content">
                     <h4>${s.name}</h4>
-                    <p class="service-desc">${s.desc || 'Serviço de limpeza profissional com garantia de qualidade FastLimpezas.'}</p>
-                    <div class="price-row">
-                        <span class="price-val">${s.isCustom ? '---' : s.price + '€'}</span>
-                        <button class="book-btn-mini">Agendar <i data-lucide="chevron-right"></i></button>
+                    <p class="service-desc">${s.desc || 'Serviço profissional FastLimpezas.'}</p>
+                    <div class="price-line">
+                        <strong>${s.isCustom ? '---' : s.price + '€'}</strong>
+                        <span class="book-link">Agendar <i data-lucide="chevron-right" style="width:14px;"></i></span>
                     </div>
                 </div>
             `;
@@ -325,21 +321,21 @@ function renderClientView() {
         const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
         
         if (userBookings.length === 0) {
-            myList.innerHTML = '<div class="empty-state"><p>Ainda não tem limpezas agendadas.</p></div>';
+            myList.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-light)">Ainda não tem agendamentos realizados.</div>';
         } else {
             userBookings.forEach(b => {
                 const item = document.createElement('div');
                 item.className = 'booking-card-modern';
                 item.innerHTML = `
-                    <div class="booking-status-indicator ${b.status.toLowerCase()}"></div>
+                    <div class="status-dot ${b.status.replace(/ /g,'-').toLowerCase()}"></div>
                     <div class="booking-main">
                         <div class="booking-header">
                             <h4>${b.serviceName}</h4>
-                            <span class="date-tag">${b.date} • ${b.time}</span>
                         </div>
+                        <p style="font-size:12px; color:var(--text-light)">${b.date} • ${b.time}</p>
                         <div class="booking-footer">
-                            <span class="status-badge-v2 ${b.status.toLowerCase()}">${b.status}</span>
-                            <span class="price-tag">${b.finalPrice ? b.finalPrice + '€' : 'A Combinar'}</span>
+                            <span class="status-pill ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
+                            <strong style="font-size:16px;">${b.finalPrice ? b.finalPrice + '€' : '--- '}</strong>
                         </div>
                     </div>
                 `;
