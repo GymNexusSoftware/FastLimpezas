@@ -22,6 +22,8 @@ let state = {
 document.addEventListener('DOMContentLoaded', () => {
     initFirebaseSync();
     initEventListeners();
+    const dIn = document.getElementById('booking-date');
+    if(dIn) dIn.setAttribute('min', new Date().toISOString().split('T')[0]);
     const saved = sessionStorage.getItem('cleaning-session');
     if (saved) {
         state.currentUser = JSON.parse(saved);
@@ -67,6 +69,9 @@ function initEventListeners() {
     document.getElementById('save-service-btn').onclick = saveService;
     document.getElementById('save-client-btn').onclick = saveClient;
     document.getElementById('confirm-booking').onclick = handleBookingSubmit;
+    document.getElementById('fill-registered-address').onclick = () => {
+        if(state.currentUser?.address) document.getElementById('booking-address').value = state.currentUser.address;
+    };
     
     document.querySelectorAll('.nav-item').forEach(item => {
         item.onclick = (e) => {
@@ -362,12 +367,22 @@ function openBookingModal(s = null) {
 async function handleBookingSubmit() {
     const sid = document.getElementById('booking-service-select').value;
     const cid = document.getElementById('booking-client-select').value;
+    const dateVal = document.getElementById('booking-date').value;
+    const timeVal = document.getElementById('booking-time').value;
+    
+    if(!dateVal || !timeVal) return showToast('Data/Hora Obrigatório!', 'error');
+
+    // Validação de Domingo e Horário (Seg-Sab, 08-17)
+    const selectedDate = new Date(dateVal);
+    if(selectedDate.getDay() === 0) return showToast('Estamos encerrados ao Domingo!', 'error');
+    if(timeVal < '08:00' || timeVal > '17:00') return showToast('Horário: 08:00 às 17:00', 'error');
+
     const s = state.cleaningTypes.find(t => t.id === sid);
     const c = state.clients.find(cl => cl.id === cid);
     const data = {
         serviceName: s.name, clientName: c.name, clientEmail: c.email,
-        date: document.getElementById('booking-date').value,
-        time: document.getElementById('booking-time').value,
+        date: dateVal,
+        time: timeVal,
         address: document.getElementById('booking-address').value,
         observations: document.getElementById('booking-observations').value,
         status: 'Pendente'
