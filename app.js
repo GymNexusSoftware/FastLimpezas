@@ -354,6 +354,11 @@ async function saveClient() {
     };
     if(state.editingClientId) {
         await update(ref(db, "clients/" + state.editingClientId), data);
+        if(state.editingClientId === state.currentUser?.id) {
+            state.currentUser = { ...state.currentUser, ...data };
+            sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
+            loginSuccess();
+        }
     } else {
         await push(ref(db, "clients"), data);
         showWelcomeEmail(email, pass);
