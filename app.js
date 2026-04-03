@@ -167,7 +167,10 @@ function renderClientView() {
     
     const myList = document.getElementById('my-bookings'); if(!myList) return;
     myList.innerHTML = '';
-    const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
+    const userBookings = state.bookings.filter(b => {
+        const isMe = b.clientId === state.currentUser?.id || (b.clientEmail && b.clientEmail === state.currentUser?.email);
+        return isMe;
+    });
     if (userBookings.length === 0) {
         myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
     } else {
@@ -394,7 +397,10 @@ async function handleBookingSubmit() {
     const s = state.cleaningTypes.find(t => t.id === sid);
     const c = state.clients.find(cl => cl.id === cid);
     const data = {
-        serviceName: s.name, clientName: c.name, clientEmail: c.email,
+        serviceName: s.name, 
+        clientName: c.name, 
+        clientEmail: c.email,
+        clientId: c.id, // ID Único para filtro seguro
         date: dateVal,
         time: timeVal,
         address: document.getElementById('booking-address').value,
