@@ -359,10 +359,46 @@ async function handleBookingSubmit() {
     }
 }
 
+function triggerEmailSimulation(content) {
+    const body = document.getElementById('email-body-content');
+    const overlay = document.getElementById('email-sending-overlay');
+    const success = document.getElementById('email-sent-success');
+    const closeBtn = document.getElementById('close-email-modal');
+    if(!body) return;
+    body.innerHTML = content;
+    overlay?.classList.remove('hidden');
+    success?.classList.add('hidden');
+    closeBtn?.classList.add('hidden');
+    emailModal().classList.remove('hidden');
+    setTimeout(() => {
+        overlay?.classList.add('hidden');
+        success?.classList.remove('hidden');
+        setTimeout(() => {
+            success?.classList.add('hidden');
+            closeBtn?.classList.remove('hidden');
+            window.lucide.createIcons();
+        }, 1200);
+    }, 1500);
+}
+
+function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Disponível</h3><p>Para: ${bk.clientEmail}</p><hr><p>Para o serviço ${bk.serviceName} propomos o valor de <strong>${bk.finalPrice}€</strong>.</p>`); }
+function showWelcomeEmail(e, p) { triggerEmailSimulation(`<p>Bem-vindo à FastLimpezas!</p><div style="background:#f3f4f6; padding:15px; border-radius:8px; margin:10px 0"><p>Utilizador: <strong>${e}</strong></p><p>Palavra-passe: <strong>${p}</strong></p></div>`); }
+function showCancellationEmail(bk, t) { triggerEmailSimulation(`<p>De: fastlimpezas@gmail.com</p><hr><p>${t === 'client' ? 'Serviço cancelado.' : 'O cliente cancelou o serviço.'}</p>`); }
+function showNewBookingAdminEmail(bk) { triggerEmailSimulation(`<h3>Novo Pedido</h3><p>O cliente <strong>${bk.clientName}</strong> solicitou <strong>${bk.serviceName}</strong> para <strong>${bk.date}</strong>.</p>`); }
+function showFinalConfirmationAdminEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Aceite</h3><p>O cliente <strong>${bk.clientName}</strong> ACEITOU o valor de <strong>${bk.finalPrice}€</strong>.</p>`); }
+
 function openClientModal(c = null) {
     state.editingClientId = c ? c.id : null;
     document.getElementById('client-name').value = c ? c.name : '';
     document.getElementById('client-email').value = c ? c.email : '';
+    document.getElementById('client-contact').value = c ? (c.contact || '') : '';
+    document.getElementById('client-nif').value = c ? (c.nif || '') : '';
+    document.getElementById('client-address').value = c ? (c.address || '') : '';
+    
+    const passGroup = document.getElementById('password-group');
+    if(passGroup) passGroup.classList.toggle('hidden', !c);
+    if(c) document.getElementById('client-password').value = c.password;
+    
     clientModal().classList.remove('hidden');
 }
 
@@ -370,14 +406,46 @@ async function saveClient() {
     const btn = document.getElementById('save-client-btn');
     try {
         btn.disabled = true;
+        
         const n = document.getElementById('client-name').value;
         const e = document.getElementById('client-email').value;
-        const data = { name: n, email: e, password: 'samba', role: 'client' };
-        if(state.editingClientId) await update(ref(db, "clients/" + state.editingClientId), data);
-        else await push(ref(db, "clients"), data);
+        const contact = document.getElementById('client-contact').value;
+        const nif = document.getElementById('client-nif').value;
+        const address = document.getElementById('client-address').value;
+        
+        if(!n || !e) throw new Error('Nome e Email são obrigatórios!');
+        
+        const pass = document.getElementById('client-password')?.value || Math.random().toString(36).slice(-6).toUpperCase();
+        
+        const data = { 
+            name: n, 
+            email: e, 
+            contact: contact || '', 
+            nif: nif || '', 
+            address: address || '', 
+            password: pass, 
+            role: 'client' 
+        };
+        
+        if(state.editingClientId) {
+            await update(ref(db, "clients/" + state.editingClientId), data);
+            if (state.currentUser && state.currentUser.id === state.editingClientId) {
+                state.currentUser = { ...data, id: state.editingClientId };
+                sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
+            }
+        } else {
+            await push(ref(db, "clients"), data);
+            showWelcomeEmail(e, pass);
+        }
+        
         clientModal().classList.add('hidden');
         showToast('Guardado!');
-    } catch (e) { showToast('Erro!', 'error'); } finally { btn.disabled = false; }
+    } catch (e) { 
+        showToast(e.message || 'Erro!', 'error'); 
+        console.error(e);
+    } finally { 
+        btn.disabled = false; 
+    }
 }
 
 function showToast(m, type = 'success') {
