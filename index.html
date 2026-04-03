@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastLimpezas - Premium Service</title>
     <!-- Configurações de Ícone e App Mobile -->
-    <link rel="icon" type="image/webp" href="https://files.oaiusercontent.com/file-K1kC2250NfX98lF1I0S2y?se=2024-10-18T21%3A07%3A10Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20private%2C%20immutable%3B&rscd=attachment%3B%20filename%3Db4e8d350-ab15-4fa2-82ad-7d722216c5be.webp&sig=P9f%2BA8X/30yZ63C3T2Q8p08sC2m78z30VqY5HicX15M%3D">
-    <link rel="apple-touch-icon" href="https://files.oaiusercontent.com/file-K1kC2250NfX98lF1I0S2y?se=2024-10-18T21%3A07%3A10Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20private%2C%20immutable%3B&rscd=attachment%3B%20filename%3Db4e8d350-ab15-4fa2-82ad-7d722216c5be.webp&sig=P9f%2BA8X/30yZ63C3T2Q8p08sC2m78z30VqY5HicX15M%3D">
+    <link rel="icon" type="image/png" href="iconFastLimpezas.png">
+    <link rel="apple-touch-icon" href="iconFastLimpezas.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="styles.css">
@@ -35,7 +35,11 @@
         <div id="login-screen" class="overlay active">
             <div class="role-card">
                 <div class="brand" style="text-align: center; margin-bottom: 30px;">
-                    <img src="https://files.oaiusercontent.com/file-aInG26eBaqp6mZf7Vd9Rz?se=2024-10-18T21%3A06%3A01Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20private%2C%20immutable%3B&rscd=attachment%3B%20filename%3D129668bd-f75e-4009-844a-9fe72583857e.webp&sig=r9nS92vpx1n8yIsXlZqN7K6O8e%2BNX04c9i/eUOfpGZk%3D" alt="FastLimpezas Logo" style="width: 100%; max-width: 280px; border-radius: 12px; margin-bottom: 10px;">
+                    <!-- Logo Principal Local -->
+                    <img src="fastlimpezas.png" 
+                         alt="FastLimpezas" 
+                         style="width: 100%; max-width: 280px; border-radius: 12px; margin-bottom: 5px;"
+                         onerror="this.src='https://via.placeholder.com/280x80?text=FastLimpezas'">
                 </div>
                 <h2 style="margin-top: 0;">Acesso ao Portal</h2>
                 <form id="login-form" class="buttons">
@@ -53,7 +57,11 @@
         <main id="main-content" class="hidden">
             <header style="padding: 12px 20px; align-items: center;">
                 <div class="header-left" style="display: flex; flex-direction: column; gap: 4px;">
-                    <img src="https://files.oaiusercontent.com/file-aInG26eBaqp6mZf7Vd9Rz?se=2024-10-18T21%3A06%3A01Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20private%2C%20immutable%3B&rscd=attachment%3B%20filename%3D129668bd-f75e-4009-844a-9fe72583857e.webp&sig=r9nS92vpx1n8yIsXlZqN7K6O8e%2BNX04c9i/eUOfpGZk%3D" alt="Logo" style="height: 18px; width: auto; object-fit: contain; align-self: flex-start; margin-bottom: 4px;">
+                    <!-- Mini Logo Local -->
+                    <img src="fastlimpezas.png" 
+                         alt="FastLimpezas" 
+                         style="height: 18px; width: auto; object-fit: contain; align-self: flex-start; margin-bottom: 4px;"
+                         onerror="this.style.display='none'">
                     <span id="role-badge" class="badge">Cliente</span>
                     <h1 id="welcome-msg" style="font-size: 1.2rem; margin-top: 2px;">Bem-vindo!</h1>
                 </div>
