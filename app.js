@@ -336,6 +336,29 @@ function showWelcomeEmail(e, p) { triggerEmailSimulation(`<h3>Bem-vindo à FastL
 function showNewBookingEmail(bk) { triggerEmailSimulation(`<h3>Confirmação de Pedido</h3><p>Confirmamos a receção do seu pedido de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong>.</p><p>A nossa equipa irá validar o agendamento em breve.</p>`); }
 function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza.</p><hr><p>Pode aceitar ou propor alterações através da aplicação.</p>`); }
 
+function openBookingModal(s = null) {
+    const sS = document.getElementById('booking-service-select');
+    const cS = document.getElementById('booking-client-select');
+    if (!sS || !cS) return;
+
+    // Popular Dropdowns
+    sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
+    cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
+    
+    if(s) sS.value = s.id;
+    
+    const addrField = document.getElementById('booking-address');
+    if(state.currentUser.role === 'client') {
+        document.getElementById('client-select-container').classList.add('hidden');
+        cS.value = state.currentUser.id;
+        if(state.currentUser.address) addrField.value = state.currentUser.address;
+    } else {
+        document.getElementById('client-select-container').classList.remove('hidden');
+    }
+    
+    document.getElementById('booking-modal').classList.remove('hidden');
+}
+
 async function handleBookingSubmit() {
     const sid = document.getElementById('booking-service-select').value;
     const cid = document.getElementById('booking-client-select').value;
