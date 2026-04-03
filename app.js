@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
-// config
 const firebaseConfig = {
   apiKey: "AIzaSyBa4OaHmPLLJlg6I1O3lX24ENsmZJU2NEo",
   authDomain: "fastlimpezas-fc27a.firebaseapp.com",
@@ -20,7 +19,6 @@ let state = {
     currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: []
 };
 
-// listeners
 document.addEventListener('DOMContentLoaded', () => {
     initFirebaseSync();
     initEventListeners();
@@ -86,7 +84,7 @@ function handleLogin(e) {
     else {
         const c = state.clients.find(cl => cl.email === u && cl.password === p);
         if (c) state.currentUser = { ...c, role: 'client' };
-        else return showToast('Credenciais erradas!', 'error');
+        else return showToast('Login Falhou!', 'error');
     }
     sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
     loginSuccess();
@@ -106,10 +104,9 @@ function loginSuccess() {
         switchView('admin');
     } else {
         document.getElementById('role-badge').textContent = 'Portal Cliente';
-        document.getElementById('welcome-msg').textContent = `Olá, ${state.currentUser.name}!`;
+        document.getElementById('welcome-msg').textContent = `Olá, ${state.currentUser.name.split(' ')[0]}!`;
         switchView('client');
     }
-    window.lucide.createIcons();
 }
 
 function switchView(view) {
@@ -129,13 +126,14 @@ function switchView(view) {
         document.getElementById('client-bookings-content').classList.toggle('hidden', view !== 'client-bookings');
     }
     window.lucide.createIcons();
+    updateStats();
 }
 
 function updateStats() {
-    const cV = document.getElementById('stat-clients-val');
-    const bV = document.getElementById('stat-bookings-val');
-    if(cV) cV.textContent = state.clients.length;
-    if(bV) bV.textContent = state.bookings.length;
+    const clientsVal = document.getElementById('stat-clients-val');
+    const bookingsVal = document.getElementById('stat-bookings-val');
+    if(clientsVal) clientsVal.textContent = state.clients.length;
+    if(bookingsVal) bookingsVal.textContent = state.bookings.length;
 }
 
 function renderClientView() {
@@ -147,8 +145,8 @@ function renderClientView() {
         card.innerHTML = `
             <div class="service-icon"><i data-lucide="sparkles"></i></div>
             <h4>${s.name}</h4>
-            <p>${s.desc || 'Serviço profissional de limpeza.'}</p>
-            <div class="price-tag">${s.isCustom ? 'Sob Consulta' : s.price + '€'}</div>
+            <p class="desc-text">${s.desc || 'Serviço profissional FastLimpezas.'}</p>
+            <div class="price">${s.price || 0}€</div>
         `;
         card.onclick = () => openBookingModal(s);
         grid.appendChild(card);
@@ -156,14 +154,21 @@ function renderClientView() {
     
     const myList = document.getElementById('my-bookings'); if(!myList) return;
     myList.innerHTML = '';
-    const uB = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
-    if (uB.length === 0) {
-        myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Sem limpezas agendadas.</p>';
+    const userBookings = state.bookings.filter(b => b.clientEmail === state.currentUser?.email);
+    if (userBookings.length === 0) {
+        myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem agendamentos.</p>';
     } else {
-        uB.forEach(b => {
+        userBookings.forEach(b => {
             const item = document.createElement('div');
-            item.className = 'admin-item';
-            item.innerHTML = `<div><h4 style="margin:0">${b.serviceName}</h4><p style="margin:5px 0 0; color:#6b7280">${b.date}</p></div><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>`;
+            item.className = 'booking-item';
+            item.innerHTML = `
+                <div class="booking-info">
+                    <h4>${b.serviceName}</h4>
+                    <p>${b.date} • ${b.time}</p>
+                    <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
+                </div>
+                <div class="booking-price">${b.finalPrice || '---'}€</div>
+            `;
             myList.appendChild(item);
         });
     }
@@ -176,11 +181,16 @@ function renderAdminServices() {
     state.cleaningTypes.forEach(s => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `<div><h4 style="margin:0">${s.name}</h4><p style="margin:5px 0 0; color:#6b7280">${s.price}€</p></div>
-        <div style="display:flex; gap:8px;">
-            <button class="edit-s" style="background:none; border:none; cursor:pointer;"><i data-lucide="edit-3" style="width:18px"></i></button>
-            <button class="del-s" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
-        </div>`;
+        item.innerHTML = `
+            <div class="admin-item-info">
+                <h4>${s.name}</h4>
+                <p>${s.price}€</p>
+            </div>
+            <div class="actions">
+                <button class="icon-btn edit-s"><i data-lucide="edit-3" style="width:18px"></i></button>
+                <button class="icon-btn del-s red"><i data-lucide="trash-2" style="width:18px"></i></button>
+            </div>
+        `;
         item.querySelector('.edit-s').onclick = () => openServiceModal(s);
         item.querySelector('.del-s').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "services/" + s.id)); };
         list.appendChild(item);
@@ -194,11 +204,16 @@ function renderAdminClients() {
     state.clients.forEach(cl => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `<div><h4 style="margin:0">${cl.name}</h4><p style="margin:5px 0 0; color:#6b7280">${cl.email}</p></div>
-        <div style="display:flex; gap:8px;">
-            <button class="edit-c" style="background:none; border:none; cursor:pointer;"><i data-lucide="edit-3" style="width:18px"></i></button>
-            <button class="del-c" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
-        </div>`;
+        item.innerHTML = `
+            <div class="admin-item-info">
+                <h4>${cl.name}</h4>
+                <p>${cl.email}</p>
+            </div>
+            <div class="actions">
+                <button class="icon-btn edit-c"><i data-lucide="edit-3" style="width:18px"></i></button>
+                <button class="icon-btn del-c red"><i data-lucide="trash-2" style="width:18px"></i></button>
+            </div>
+        `;
         item.querySelector('.edit-c').onclick = () => openClientModal(cl);
         item.querySelector('.del-c').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "clients/" + cl.id)); };
         list.appendChild(item);
@@ -212,14 +227,23 @@ function renderGlobalAgenda() {
     state.bookings.forEach(b => {
         const item = document.createElement('div');
         item.className = 'admin-item';
-        item.innerHTML = `<div><h4 style="margin:0">${b.serviceName}</h4><p style="margin:2px 0 0; color:#6b7280">${b.clientName} • ${b.date}</p><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}" style="margin-top:5px; display:inline-block">${b.status}</span></div>
-        <div style="display:flex; gap:8px;">
-            <button class="set-p" style="background:var(--primary); border:none; padding:5px; border-radius:5px; font-weight:bold; cursor:pointer">Preço</button>
-            <button class="del-b" style="background:none; border:none; cursor:pointer; color:#ef4444"><i data-lucide="trash-2" style="width:18px"></i></button>
-        </div>`;
-        if(b.status !== 'Pendente') item.querySelector('.set-p').classList.add('hidden');
-        item.querySelector('.set-p').onclick = async () => { const p = prompt('Preço?'); if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p }); };
-        item.querySelector('.del-b').onclick = async () => { if(confirm('Eliminar?')) await remove(ref(db, "bookings/" + b.id)); };
+        item.innerHTML = `
+            <div class="admin-item-info">
+                <h4>${b.serviceName}</h4>
+                <p>${b.clientName} • ${b.date}</p>
+                <div style="margin-top:5px"><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span></div>
+            </div>
+            <div class="actions">
+                ${b.status === 'Pendente' ? `<button class="btn-small set-p">Preço</button>` : ''}
+                <button class="icon-btn del-b red"><i data-lucide="trash-2" style="width:18px"></i></button>
+            </div>
+        `;
+        const pBtn = item.querySelector('.set-p');
+        if(pBtn) pBtn.onclick = async () => {
+            const p = prompt('Preço final?');
+            if(p) await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
+        };
+        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
         list.appendChild(item);
     });
     window.lucide.createIcons();
@@ -273,10 +297,11 @@ function openBookingModal(s = null) {
     sS.innerHTML = state.cleaningTypes.map(tp => `<option value="${tp.id}">${tp.name}</option>`).join('');
     cS.innerHTML = state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join('');
     if(s) sS.value = s.id;
+    const addrField = document.getElementById('booking-address');
     if(state.currentUser.role === 'client') {
         document.getElementById('client-select-container').classList.add('hidden');
         cS.value = state.currentUser.id;
-        document.getElementById('booking-address').value = state.currentUser.address || '';
+        if(state.currentUser.address) addrField.value = state.currentUser.address;
     } else {
         document.getElementById('client-select-container').classList.remove('hidden');
     }

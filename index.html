@@ -3,227 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastLimpezas</title>
+    <title>FastLimpezas - Premium Service</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --primary: #fbbf24;
-            --primary-dark: #d97706;
-            --bg: #f9fafb;
-            --card: #ffffff;
-            --text: #1f2937;
-            --border: #e5e7eb;
+        /* Pequeno ajuste para as descrições que você pediu */
+        .service-card p.desc-text {
+            font-size: 11px;
+            color: #6b7280;
+            margin: 5px 0 10px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
-        .hidden { display: none !important; }
-
-        /* Login */
-        .login-overlay { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .login-card { background: white; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .login-card h1 { font-family: 'Outfit'; font-size: 32px; margin-bottom: 30px; }
-
-        /* Layout */
-        header { background: white; border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .nav-brand { font-family: 'Outfit'; font-weight: 800; font-size: 1.2rem; }
-        
-        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        .welcome-section { margin-bottom: 30px; }
-        .welcome-section h2 { font-family: 'Outfit'; font-size: 28px; margin: 0; }
-        .welcome-section p { color: #6b7280; margin: 5px 0 0; }
-
-        /* Cards */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .service-card { background: white; border: 1px solid var(--border); padding: 20px; border-radius: 15px; cursor: pointer; transition: 0.2s; }
-        .service-card:hover { border-color: var(--primary); transform: translateY(-3px); }
-        .service-icon { background: #fef3c7; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-bottom: 15px; color: var(--primary-dark); }
-        .service-card h4 { margin: 0 0 8px 0; font-size: 18px; }
-        .service-card p { font-size: 13px; color: #6b7280; margin-bottom: 15px; line-height: 1.4; }
-        .price-tag { font-weight: 800; color: #10b981; font-size: 1.1rem; }
-
-        /* Admin & Lists */
-        .admin-item { background: white; border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
-        .status-badge.pendente { background: #fef3c7; color: #92400e; }
-        .status-badge.confirmado { background: #d1fae5; color: #065f46; }
-
-        /* Forms */
-        form input, form select, form textarea, .input-modern { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 15px; outline: none; }
-        .btn-primary { background: var(--primary); border: none; color: #92400e; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary:hover { background: var(--primary-dark); color: white; }
-
-        /* Nav Bottom */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-        .nav-item { text-decoration: none; color: #6b7280; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
-        .nav-item.active { color: var(--primary-dark); }
-
-        /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 450px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; color: #6b7280; }
-
-        /* Stats */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: white; border: 1px solid var(--border); padding: 20px; border-radius: 15px; text-align: center; }
-        .stat-card .value { font-size: 24px; font-weight: 800; display: block; }
-        .stat-card .label { font-size: 12px; color: #6b7280; }
-
-        #toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 12px 24px; border-radius: 15px; z-index: 2000; display: flex; align-items: center; gap: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .service-card { min-height: 160px; justify-content: flex-start; padding-top: 15px; }
     </style>
 </head>
 <body>
-    <!-- Login Section -->
-    <div id="login-screen" class="login-overlay">
-        <div class="login-card">
-            <h1>FastLimpezas</h1>
-            <form id="login-form">
-                <input type="text" id="username" placeholder="Utilizador ou Email" class="input-modern" required>
-                <input type="password" id="password" placeholder="Palavra-passe" class="input-modern" required>
-                <button type="submit" class="btn-primary">Entrar</button>
-            </form>
+    <div id="app" class="mobile-frame">
+        <!-- Login Screen -->
+        <div id="login-screen" class="overlay active">
+            <div class="role-card">
+                <div class="brand">
+                    <div class="logo-box"><i data-lucide="sparkles"></i></div>
+                    <h1>FastLimpezas</h1>
+                    <p>Qualidade e Rapidez</p>
+                </div>
+                <h2>Acesso ao Portal</h2>
+                <form id="login-form" class="buttons">
+                    <input type="text" id="username" placeholder="Utilizador" class="input-modern" required>
+                    <input type="password" id="password" placeholder="Palavra-passe" class="input-modern" required>
+                    <button type="submit" class="btn primary">
+                        <i data-lucide="log-in"></i>
+                        <span>Entrar</span>
+                    </button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <!-- Main Container -->
-    <div id="main-content" class="hidden">
-        <header>
-            <div class="nav-brand">FastLimpezas</div>
-            <div style="display:flex; gap:10px;">
-                <button id="edit-profile-btn" class="hidden" style="background:none; border:none; cursor:pointer;"><i data-lucide="user-cog"></i></button>
-                <button id="logout-btn" style="background:none; border:none; cursor:pointer;"><i data-lucide="log-out"></i></button>
-            </div>
-        </header>
+        <!-- Main App Container -->
+        <main id="main-content" class="hidden">
+            <header>
+                <div class="header-left">
+                    <span id="role-badge" class="badge">Cliente</span>
+                    <h1 id="welcome-msg">Bem-vindo!</h1>
+                </div>
+                <div class="header-right">
+                    <button id="edit-profile-btn" class="icon-btn hidden"><i data-lucide="user-cog"></i></button>
+                    <button id="logout-btn" class="icon-btn"><i data-lucide="log-out"></i></button>
+                </div>
+            </header>
 
-        <div class="container">
-            <div class="welcome-section">
-                <p id="role-badge" style="font-weight:700; color:var(--primary-dark); font-size:12px; text-transform:uppercase;">Portal</p>
-                <h2 id="welcome-msg">Bem-vindo!</h2>
-            </div>
-
-            <!-- Admin View -->
-            <section id="admin-view" class="hidden">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span id="stat-clients-val" class="value">0</span>
-                        <span class="label">Clientes</span>
+            <!-- Views -->
+            <div id="client-view" class="view hidden">
+                <div class="scroll-container">
+                    <div id="client-home-content">
+                        <div class="section-title">
+                            <h3>Nossos Serviços</h3>
+                            <p class="subtitle">Selecione o tipo de limpeza</p>
+                        </div>
+                        <div id="cleaning-types-grid" class="services-grid"></div>
                     </div>
-                    <div class="stat-card">
-                        <span id="stat-bookings-val" class="value">0</span>
-                        <span class="label">Agendamentos</span>
+                    <div id="client-bookings-content" class="hidden">
+                        <div class="section-title">
+                            <h3>Minhas Limpezas</h3>
+                        </div>
+                        <div id="my-bookings" class="bookings-list"></div>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h3>Serviços</h3>
-                    <button id="add-service-btn" style="padding:8px 15px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">+ Novo</button>
-                </div>
-                <div id="admin-services-list"></div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin:30px 0 20px;">
-                    <h3>Clientes</h3>
-                    <button id="add-client-btn" style="padding:8px 15px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">+ Novo</button>
-                </div>
-                <div id="admin-clients-list"></div>
-            </section>
-
-            <!-- Agenda View -->
-            <section id="agenda-view" class="hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h3>Agenda Global</h3>
-                    <button id="admin-add-booking-btn" style="padding:8px 15px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">+ Agendar</button>
-                </div>
-                <div id="all-bookings-list"></div>
-            </section>
-
-            <!-- Client View -->
-            <section id="client-view" class="hidden">
-                <div id="client-home-content">
-                    <div id="cleaning-types-grid" class="services-grid"></div>
-                </div>
-                <div id="client-bookings-content" class="hidden">
-                    <h3>Minhas Limpezas</h3>
-                    <div id="my-bookings"></div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Navigation -->
-        <nav id="nav-admin" class="bottom-nav hidden">
-            <div class="nav-item active" data-view="admin">
-                <i data-lucide="settings"></i>
-                <span>Gestão</span>
             </div>
-            <div class="nav-item" data-view="agenda">
-                <i data-lucide="calendar"></i>
-                <span>Agenda</span>
-            </div>
-        </nav>
 
-        <nav id="nav-client" class="bottom-nav hidden">
-            <div class="nav-item active" data-view="client">
-                <i data-lucide="home"></i>
-                <span>Início</span>
+            <div id="admin-view" class="view hidden">
+                <div class="scroll-container">
+                    <div class="admin-stats">
+                        <div class="stat-card yellow">
+                            <span class="label">Clientes</span>
+                            <span id="stat-clients-val" class="value">0</span>
+                        </div>
+                        <div class="stat-card green">
+                            <span class="label">Reservas</span>
+                            <span id="stat-bookings-val" class="value">0</span>
+                        </div>
+                    </div>
+                    <div class="section-header-row">
+                        <h3>Serviços</h3>
+                        <button id="add-service-btn" class="btn-small">+ Novo</button>
+                    </div>
+                    <div id="admin-services-list" class="admin-list"></div>
+                    <div class="divider"></div>
+                    <div class="section-header-row">
+                        <h3>Clientes</h3>
+                        <button id="add-client-btn" class="btn-small yellow-btn">+ Novo Cliente</button>
+                    </div>
+                    <div id="admin-clients-list" class="admin-list"></div>
+                </div>
             </div>
-            <div class="nav-item" data-view="client-bookings">
-                <i data-lucide="list"></i>
-                <span>Limpezas</span>
+
+            <div id="agenda-view" class="view hidden">
+                <div class="scroll-container">
+                    <div class="section-header-row">
+                        <h3>Agenda Global</h3>
+                        <button id="admin-add-booking-btn" class="btn-small">+ Agendar</button>
+                    </div>
+                    <div id="all-bookings-list" class="admin-list"></div>
+                </div>
             </div>
-        </nav>
+
+            <!-- Bottom Nav -->
+            <nav id="nav-admin" class="bottom-nav hidden">
+                <a class="nav-item active" data-view="admin">
+                    <i data-lucide="settings"></i>
+                    <span>Gestão</span>
+                </a>
+                <a class="nav-item" data-view="agenda">
+                    <i data-lucide="calendar"></i>
+                    <span>Agenda</span>
+                </a>
+            </nav>
+
+            <nav id="nav-client" class="bottom-nav hidden">
+                <a class="nav-item active" data-view="client">
+                    <i data-lucide="home"></i>
+                    <span>Início</span>
+                </a>
+                <a class="nav-item" data-view="client-bookings">
+                    <i data-lucide="list"></i>
+                    <span>Limpezas</span>
+                </a>
+            </nav>
+        </main>
     </div>
 
-    <!-- Modals -->
-    <div id="booking-modal" class="modal-overlay hidden">
+    <!-- Modals (Baseados no seu CSS) -->
+    <div id="booking-modal" class="modal hidden">
         <div class="modal-content">
-            <div class="close-btn" id="close-booking-modal"><i data-lucide="x"></i></div>
-            <h3>Agendar Serviço</h3>
-            <select id="booking-service-select"></select>
-            <div id="client-select-container">
-                <select id="booking-client-select"></select>
+            <button class="close-modal" id="close-booking-modal"><i data-lucide="x"></i></button>
+            <h3>Marcar Limpeza</h3>
+            <div class="input-group">
+                <label>Serviço</label>
+                <select id="booking-service-select" class="input-modern"></select>
             </div>
-            <input type="date" id="booking-date">
-            <input type="time" id="booking-time">
-            <textarea id="booking-address" placeholder="Morada da Limpeza" rows="2"></textarea>
-            <textarea id="booking-observations" placeholder="Observações (ex: chave no vizinho...)" rows="2"></textarea>
-            <button id="confirm-booking" class="btn-primary">Confirmar</button>
+            <div id="client-select-container" class="input-group">
+                <label>Cliente</label>
+                <select id="booking-client-select" class="input-modern"></select>
+            </div>
+            <div class="input-group">
+                <label>Data</label>
+                <input type="date" id="booking-date" class="input-modern">
+            </div>
+            <div class="input-group">
+                <label>Hora</label>
+                <input type="time" id="booking-time" class="input-modern" value="09:00">
+            </div>
+            <textarea id="booking-address" placeholder="Morada da Limpeza" class="input-modern" rows="2"></textarea>
+            <textarea id="booking-observations" placeholder="Observações..." class="input-modern" rows="2"></textarea>
+            <button id="confirm-booking" class="btn primary full-width">Confirmar</button>
         </div>
     </div>
 
-    <div id="client-modal" class="modal-overlay hidden">
+    <div id="client-modal" class="modal hidden">
         <div class="modal-content">
-            <div class="close-btn" id="close-client-modal-btn"><i data-lucide="x"></i></div>
+            <button class="close-modal" id="close-client-modal-btn"><i data-lucide="x"></i></button>
             <h3 id="client-modal-title">Novo Cliente</h3>
-            <input type="text" id="client-name" placeholder="Nome">
-            <input type="email" id="client-email" placeholder="Email">
-            <input type="text" id="client-contact" placeholder="Contacto">
+            <input type="text" id="client-name" placeholder="Nome" class="input-modern">
+            <input type="email" id="client-email" placeholder="Email" class="input-modern">
+            <input type="text" id="client-contact" placeholder="Contacto" class="input-modern">
             <div id="password-group" class="hidden">
-                <input type="text" id="client-password" placeholder="Palavra-passe">
+                <label>Senha</label>
+                <input type="text" id="client-password" class="input-modern">
             </div>
-            <input type="text" id="client-nif" placeholder="NIF">
-            <textarea id="client-address" placeholder="Morada Completa" rows="2"></textarea>
-            <button id="save-client-btn" class="btn-primary">Salvar</button>
+            <input type="text" id="client-nif" placeholder="NIF" class="input-modern">
+            <textarea id="client-address" placeholder="Morada" class="input-modern" rows="2"></textarea>
+            <button id="save-client-btn" class="btn primary full-width">Guardar</button>
         </div>
     </div>
 
-    <div id="admin-modal" class="modal-overlay hidden">
+    <div id="admin-modal" class="modal hidden">
         <div class="modal-content">
-            <div class="close-btn" id="close-admin-modal-btn"><i data-lucide="x"></i></div>
+            <button class="close-modal" id="close-admin-modal-btn"><i data-lucide="x"></i></button>
             <h3>Configurar Serviço</h3>
-            <input type="text" id="admin-service-name" placeholder="Nome do Serviço">
-            <input type="number" id="admin-service-price" placeholder="Preço (€)">
-            <textarea id="admin-service-desc" placeholder="Descrição rápida do serviço" rows="3"></textarea>
-            <button id="save-service-btn" class="btn-primary">Gravar</button>
+            <input type="text" id="admin-service-name" placeholder="Nome do Serviço" class="input-modern">
+            <input type="number" id="admin-service-price" placeholder="Preço (€)" class="input-modern">
+            <textarea id="admin-service-desc" placeholder="Descrição rápida..." class="input-modern" rows="3"></textarea>
+            <button id="save-service-btn" class="btn primary full-width">Gravar</button>
         </div>
     </div>
 
-    <div id="email-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div id="email-body-content"></div>
-            <button id="close-email-modal" class="btn-primary" style="margin-top:20px;">Fechar</button>
+    <div id="email-modal" class="modal hidden">
+        <div class="modal-content email-style">
+            <div id="email-body-content" class="email-body"></div>
+            <button id="close-email-modal" class="btn primary full-width">OK</button>
         </div>
     </div>
 
-    <div id="toast" class="hidden">
+    <div id="toast" class="toast hidden">
         <i data-lucide="check-circle"></i>
         <span id="toast-msg">Sucesso!</span>
     </div>
