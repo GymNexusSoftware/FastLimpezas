@@ -80,6 +80,30 @@ function initFirebaseSync() {
         if(state.activeView === 'agenda') renderGlobalAgenda();
         if(state.activeView === 'client' || state.activeView === 'client-bookings') renderClientView();
     });
+
+    // Tentar migrar dados do localStorage so se estiver vazio no Firebase
+    migrateFromLocalStorage();
+}
+
+async function migrateFromLocalStorage() {
+    const oldData = localStorage.getItem('cleaning-app-v11');
+    if(!oldData) return;
+    const p = JSON.parse(oldData);
+    
+    // So migrar se o Firestore estiver vazio (simplificado para clientes como exemplo)
+    if (state.clients.length === 0 && p.clients && p.clients.length > 0) {
+        showToast('A migrar dados...', 'error');
+        for (const c of p.clients) {
+            const { id, ...data } = c;
+            await addDoc(collection(db, "clients"), data);
+        }
+        for (const b of p.bookings || []) {
+            const { id, ...data } = b;
+            await addDoc(collection(db, "bookings"), data);
+        }
+        localStorage.removeItem('cleaning-app-v11');
+        showToast('Migração Completa!');
+    }
 }
 
 // Create initial services if DB is empty
@@ -349,15 +373,21 @@ function openServiceModal(s = null) {
 }
 
 async function saveService() {
-    const n = document.getElementById('admin-service-name').value;
-    const p = parseFloat(document.getElementById('admin-service-price').value) || 0;
-    const d = document.getElementById('admin-service-desc').value;
-    const c = document.getElementById('admin-service-custom').checked;
-    if(!n) return showToast('Nome!', 'error');
-    const sData = { name: n, price: p, desc: d, isCustom: c };
-    if(state.editingServiceId) await updateDoc(doc(db, "services", state.editingServiceId), sData);
-    else await addDoc(collection(db, "services"), sData);
-    adminModal().classList.add('hidden');
+    try {
+        const n = document.getElementById('admin-service-name').value;
+        const p = parseFloat(document.getElementById('admin-service-price').value) || 0;
+        const d = document.getElementById('admin-service-desc').value;
+        const c = document.getElementById('admin-service-custom').checked;
+        if(!n) return showToast('Nome!', 'error');
+        const sData = { name: n, price: p, desc: d, isCustom: c };
+        if(state.editingServiceId) await updateDoc(doc(db, "services", state.editingServiceId), sData);
+        else await addDoc(collection(db, "services"), sData);
+        adminModal().classList.add('hidden');
+        showToast('Guardado!');
+    } catch (err) {
+        showToast('Erro Firebase: Verifique as Regras!', 'error');
+        console.error(err);
+    }
 }
 
 function openBookingModal(s = null) {
@@ -380,23 +410,28 @@ function openBookingModal(s = null) {
 }
 
 async function handleBookingSubmit() {
-    const sid = document.getElementById('booking-service-select').value;
-    const d = document.getElementById('booking-date').value;
-    const t = document.getElementById('booking-time').value;
-    const o = document.getElementById('booking-observations').value;
-    const a = document.getElementById('booking-address').value;
-    if(!d || !a) return showToast('Preencha Data e Morada!', 'error');
-    const s = state.cleaningTypes.find(tp => String(tp.id) === String(sid));
-    const cid = document.getElementById('booking-client-select').value;
-    const c = state.clients.find(cl => String(cl.id) === String(cid));
-    const bData = {
-        serviceName: s.name, clientName: c.name, clientEmail: c.email, date: d, time: t, status: 'Pendente', 
-        finalPrice: null, observations: o, address: a, timestamp: Date.now()
-    };
-    await addDoc(collection(db, "bookings"), bData);
-    bookingModal().classList.add('hidden'); 
-    showToast('Pedido enviado!');
-    showNewBookingAdminEmail(bData);
+    try {
+        const sid = document.getElementById('booking-service-select').value;
+        const d = document.getElementById('booking-date').value;
+        const t = document.getElementById('booking-time').value;
+        const o = document.getElementById('booking-observations').value;
+        const a = document.getElementById('booking-address').value;
+        if(!d || !a) return showToast('Preencha Data e Morada!', 'error');
+        const s = state.cleaningTypes.find(tp => String(tp.id) === String(sid));
+        const cid = document.getElementById('booking-client-select').value;
+        const c = state.clients.find(cl => String(cl.id) === String(cid));
+        const bData = {
+            serviceName: s.name, clientName: c.name, clientEmail: c.email, date: d, time: t, status: 'Pendente', 
+            finalPrice: null, observations: o, address: a, timestamp: Date.now()
+        };
+        await addDoc(collection(db, "bookings"), bData);
+        bookingModal().classList.add('hidden'); 
+        showToast('Pedido enviado!');
+        showNewBookingAdminEmail(bData);
+    } catch (err) {
+        showToast('Erro ao agendar!', 'error');
+        console.error(err);
+    }
 }
 
 function triggerEmailSimulation(content) {
@@ -448,28 +483,33 @@ function openClientModal(c = null) {
 }
 
 async function saveClient() {
-    const n = document.getElementById('client-name').value;
-    const e = document.getElementById('client-email').value;
-    if(!n || !e) return showToast('Preencha os campos!', 'error');
-    const contact = document.getElementById('client-contact').value;
-    const nif = document.getElementById('client-nif').value;
-    const address = document.getElementById('client-address').value;
-    const pass = document.getElementById('client-password').value || Math.random().toString(36).slice(-6).toUpperCase();
-    
-    const cData = { name: n, email: e, contact, nif, address, password: pass, role: 'client' };
-    
-    if(state.editingClientId) {
-        await updateDoc(doc(db, "clients", state.editingClientId), cData);
-        if (state.currentUser && state.currentUser.id === state.editingClientId) {
-            state.currentUser = { ...cData, id: state.editingClientId };
-            sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
+    try {
+        const n = document.getElementById('client-name').value;
+        const e = document.getElementById('client-email').value;
+        if(!n || !e) return showToast('Preencha os campos!', 'error');
+        const contact = document.getElementById('client-contact').value;
+        const nif = document.getElementById('client-nif').value;
+        const address = document.getElementById('client-address').value;
+        const pass = document.getElementById('client-password').value || Math.random().toString(36).slice(-6).toUpperCase();
+        
+        const cData = { name: n, email: e, contact, nif, address, password: pass, role: 'client' };
+        
+        if(state.editingClientId) {
+            await updateDoc(doc(db, "clients", state.editingClientId), cData);
+            if (state.currentUser && state.currentUser.id === state.editingClientId) {
+                state.currentUser = { ...cData, id: state.editingClientId };
+                sessionStorage.setItem('cleaning-session', JSON.stringify(state.currentUser));
+            }
+        } else {
+            await addDoc(collection(db, "clients"), cData);
+            showWelcomeEmail(e, pass);
         }
-    } else {
-        await addDoc(collection(db, "clients"), cData);
-        showWelcomeEmail(e, pass);
+        clientModal().classList.add('hidden'); 
+        showToast('Guardado!');
+    } catch (err) {
+        showToast('Erro ao salvar cliente!', 'error');
+        console.error(err);
     }
-    clientModal().classList.add('hidden'); 
-    showToast('Guardado!');
 }
 
 function showToast(m, type = 'success') {
