@@ -177,8 +177,14 @@ function renderClientView() {
     const myList = document.getElementById('my-bookings'); if(!myList) return;
     myList.innerHTML = '';
     const userBookings = state.bookings.filter(b => {
-        const isMe = b.clientId === state.currentUser?.id || (b.clientEmail && b.clientEmail === state.currentUser?.email);
-        return isMe;
+        if (!state.currentUser) return false;
+        const myId = state.currentUser.id;
+        const myEmail = (state.currentUser.email || "").trim().toLowerCase();
+        
+        const bId = b.clientId;
+        const bEmail = (b.clientEmail || "").trim().toLowerCase();
+        
+        return bId === myId || (myEmail !== "" && bEmail === myEmail);
     });
     if (userBookings.length === 0) {
         myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
