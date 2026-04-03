@@ -73,9 +73,13 @@ function initEventListeners() {
         const addrField = document.getElementById('booking-address');
         const msg = document.getElementById('profile-address-msg');
         if(e.target.checked) {
-            if(state.currentUser?.address) {
-                addrField.value = state.currentUser.address;
+            // Buscar dados frescos da lista sincronizada (state.clients)
+            const freshUser = state.clients.find(c => c.id === state.currentUser?.id) || state.currentUser;
+            if(freshUser && freshUser.address && freshUser.address.trim() !== '') {
+                addrField.value = freshUser.address;
                 msg.classList.remove('hidden');
+                // Sincroniza localmente para garantir consistência
+                state.currentUser.address = freshUser.address;
             } else {
                 e.target.checked = false;
                 showToast('Sem morada no perfil! Adicione no Perfil.', 'error');
