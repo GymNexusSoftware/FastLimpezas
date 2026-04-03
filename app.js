@@ -72,17 +72,20 @@ function initEventListeners() {
     document.getElementById('use-profile-address').addEventListener('change', (e) => {
         const addrField = document.getElementById('booking-address');
         const msg = document.getElementById('profile-address-msg');
-        if(e.target.checked) {
-            // Buscar dados frescos da lista sincronizada (state.clients)
-            const freshUser = state.clients.find(c => c.id === state.currentUser?.id) || state.currentUser;
-            if(freshUser && freshUser.address && freshUser.address.trim() !== '') {
-                addrField.value = freshUser.address;
+        
+        if (e.target.checked) {
+            // Sincronizar dados do cliente logado vindo da lista oficial
+            const currentUserFull = state.clients.find(c => c.id === state.currentUser?.id) || state.currentUser;
+            const currentAddr = currentUserFull?.address || "";
+            
+            if (currentAddr && currentAddr.trim() !== "") {
+                addrField.value = currentAddr;
                 msg.classList.remove('hidden');
-                // Sincroniza localmente para garantir consistência
-                state.currentUser.address = freshUser.address;
+                // Sincronizar o estado
+                if (state.currentUser) state.currentUser.address = currentAddr;
             } else {
                 e.target.checked = false;
-                showToast('Sem morada no perfil! Adicione no Perfil.', 'error');
+                showToast('Atenção: Não tem morada no perfil! Adicione no Perfil.', 'error');
             }
         } else {
             msg.classList.add('hidden');
