@@ -148,6 +148,10 @@ function switchView(view) {
     }
     window.lucide.createIcons();
     updateStats();
+    renderClientView();
+    renderAdminClients();
+    renderAdminServices();
+    renderGlobalAgenda();
 }
 
 function updateStats() {
