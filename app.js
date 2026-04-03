@@ -72,9 +72,14 @@ function initEventListeners() {
     document.getElementById('use-profile-address').addEventListener('change', (e) => {
         const addrField = document.getElementById('booking-address');
         const msg = document.getElementById('profile-address-msg');
-        if(e.target.checked && state.currentUser?.address) {
-            addrField.value = state.currentUser.address;
-            msg.classList.remove('hidden');
+        if(e.target.checked) {
+            if(state.currentUser?.address) {
+                addrField.value = state.currentUser.address;
+                msg.classList.remove('hidden');
+            } else {
+                e.target.checked = false;
+                showToast('Sem morada no perfil! Adicione no Perfil.', 'error');
+            }
         } else {
             msg.classList.add('hidden');
         }
@@ -174,40 +179,50 @@ function renderClientView() {
     if (userBookings.length === 0) {
         myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
     } else {
-        userBookings.forEach(b => {
-            const item = document.createElement('div');
-            item.className = 'booking-item';
-            const isWaiting = b.status === 'Aguardando Cliente';
-            const statusClass = b.status.replace(/ /g,'-').toLowerCase();
-            const statusText = isWaiting ? 'Orçamento Recebido' : b.status;
-            
-            item.innerHTML = `
-                <div class="booking-info">
-                    <h4>${b.serviceName}</h4>
-                    <p>${b.date} • ${b.time}</p>
-                    <span class="status-badge ${statusClass}">${statusText}</span>
-                    ${isWaiting ? `
-                        <div style="margin-top:12px; display:flex; gap:10px;">
-                            <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Aceitar Valor</button>
-                            <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px;">Recusar</button>
+            userBookings.forEach(b => {
+                const item = document.createElement('div');
+                item.className = 'booking-item';
+                const isWaiting = b.status === 'Aguardando Cliente';
+                const isCancellable = b.status !== 'Cancelado' && b.status !== 'Recusado';
+                const statusClass = b.status.replace(/ /g,'-').toLowerCase();
+                const statusText = isWaiting ? 'Orçamento Recebido' : b.status;
+                
+                item.innerHTML = `
+                    <div class="booking-info">
+                        <h4>${b.serviceName}</h4>
+                        <p>${b.date} • ${b.time}</p>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            ${isCancellable ? `<button class="cancel-b" style="background:none; border:none; color:#ef4444; font-size:11px; cursor:pointer; text-decoration:underline; font-weight:600;">Cancelar</button>` : ''}
                         </div>
-                    ` : ''}
-                </div>
-                <div class="booking-price">${b.finalPrice ? b.finalPrice + '€' : '--- '}</div>
-            `;
-            
-            if(isWaiting) {
-                item.querySelector('.accept-p').onclick = async () => {
-                    if(confirm('Confirma o agendamento por este valor?'))
-                        await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
-                };
-                item.querySelector('.reject-p').onclick = async () => {
-                    if(confirm('Deseja recusar este orçamento?'))
-                        await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
-                };
-            }
-            myList.appendChild(item);
-        });
+                        ${isWaiting ? `
+                            <div style="margin-top:12px; display:flex; gap:10px;">
+                                <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Aceitar Valor</button>
+                                <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px;">Recusar</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="booking-price">${b.finalPrice ? b.finalPrice + '€' : '--- '}</div>
+                `;
+                
+                if(isWaiting) {
+                    item.querySelector('.accept-p').onclick = async () => {
+                        if(confirm('Confirma o agendamento por este valor £?'))
+                            await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
+                    };
+                    item.querySelector('.reject-p').onclick = async () => {
+                        if(confirm('Deseja recusar este orçamento?'))
+                            await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
+                    };
+                }
+                if(isCancellable) {
+                    item.querySelector('.cancel-b').onclick = async () => {
+                        if(confirm('Deseja cancelar esta limpeza?'))
+                            await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
+                    };
+                }
+                myList.appendChild(item);
+            });
     }
     window.lucide.createIcons();
 }
