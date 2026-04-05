@@ -189,9 +189,17 @@ function updateStats() {
     
     if(!statTotal && !statPending && !statClients) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Enquanto não há reservas carregadas, mostramos um traço
+    if (state.bookings.length === 0 && state.clients.length === 0) {
+        if(statTotal) statTotal.textContent = '--';
+        if(statPending) statPending.textContent = '--';
+        return;
+    }
+
+    // Usar data local para evitar problemas de fuso horário à meia-noite
+    const todayStr = new Date().toLocaleDateString('en-CA');
     
-    // Filtrar apenas o que está "em mãos" (Futuro e não cancelado)
+    // Contar Agendadas (Futuro + Hoje, não cancelado)
     const scheduledOnly = state.bookings.filter(b => {
         const isCancelled = b.status === 'Cancelado' || b.status === 'Recusado';
         const isPast = b.date < todayStr;

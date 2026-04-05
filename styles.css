@@ -277,8 +277,14 @@ header {
 }
 .btn.primary { background: var(--primary-yellow-vibrant); color: black; }
 .btn-small { 
-    background: var(--primary-yellow); border: none; padding: 6px 12px; 
-    border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; 
+    background: var(--primary-yellow-dark); 
+    border: 1px solid rgba(0,0,0,0.05);
+    padding: 8px 16px; 
+    border-radius: 10px; 
+    font-size: 13px; 
+    font-weight: 800; 
+    cursor: pointer; 
+    color: var(--primary-green-dark);
 }
 .input-modern { 
     width: 100%; padding: 12px; border: 1px solid #eee; 
@@ -423,27 +429,27 @@ header {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #9CA3AF;
+    color: #6b7280; /* Mais escuro para ser visível */
     gap: 4px;
     position: relative;
     transition: 0.3s;
 }
 
 .nav-item svg {
-    width: 24px;
-    height: 24px;
-    stroke-width: 2.25px;
+    width: 28px;
+    height: 28px;
+    stroke-width: 2.5px;
 }
 
 .nav-item span {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
 }
 
 .nav-item.active {
-    color: var(--primary-green-dark);
+    color: var(--primary-green);
 }
 
 .nav-item.active::after {
@@ -471,7 +477,26 @@ header {
     z-index: 3000; display: flex; align-items: center; gap: 10px; font-weight: 600;
 }
 
-.icon-btn { background: none; border: none; padding: 8px; cursor: pointer; color: var(--text-muted); }
+.icon-btn { 
+    background: #f9fafb; 
+    border: 1px solid #f3f4f6;
+    border-radius: 10px;
+    padding: 10px; 
+    cursor: pointer; 
+    color: var(--text-muted); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.icon-btn:hover { background: #f3f4f6; color: var(--text-main); }
+.icon-btn.red { color: #ef4444; background: #fef2f2; border-color: #fee2e2; }
+
+.icon-btn i {
+    width: 20px !important;
+    height: 20px !important;
+}
 
 .sending-overlay, .sent-success {
     position: absolute; inset: 0; background: white; display: flex;
