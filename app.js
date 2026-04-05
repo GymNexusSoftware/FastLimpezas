@@ -372,57 +372,74 @@ function renderGlobalAgenda() {
         else categories.upcoming.items.push(b);
     });
 
-    const activeCat = categories[state.activeAdminTab];
-    if(activeCat.items.length === 0) {
-        list.innerHTML = `<p style="text-align:center; color:#6b7280; padding:40px; font-size:13px;">Não existem serviços nesta categoria.</p>`;
-        return;
-    }
+    Object.keys(categories).forEach(key => {
+        const cat = categories[key];
+        if (key !== state.activeAdminTab) return; 
 
-    activeCat.items.forEach(b => {
-        const item = document.createElement('div');
-        item.className = `admin-item ${state.activeAdminTab}`;
-        item.innerHTML = `
-            <div class="admin-item-info">
-                <h4>${b.serviceName}</h4>
-                <p>${b.clientName} • ${b.date} • ${b.time}</p>
-                <p style="font-size:11px; margin-top:4px;"><strong>Morada:</strong> ${b.address || 'Não definida'}</p>
-                ${b.observations ? `<p style="font-size:11px; color:#6b7280; font-style:italic;">"${b.observations}"</p>` : ''}
-                <div style="margin-top:5px"><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span></div>
-            </div>
-            <div class="actions">
-                ${b.status === 'Pendente' ? `<button class="btn-small set-p" style="background:var(--primary-yellow-vibrant);">Definir Preço</button>` : ''}
-                ${b.status === 'Pendente' && b.finalPrice ? `<button class="btn-small confirm-b" style="background:#4ade80; color:white;">Confirmar</button>` : ''}
-                ${b.status !== 'Cancelado' && b.status !== 'Recusado' ? `<button class="btn-small cancel-admin-b" style="background:#fee2e2; color:#b91c1c;">Cancelar</button>` : ''}
-                <button class="icon-btn del-b red"><i data-lucide="trash-2" style="width:18px"></i></button>
-            </div>
-        `;
-        const pBtn = item.querySelector('.set-p');
-        if(pBtn) pBtn.onclick = async () => {
-            const p = prompt('Preço final (€)?', b.finalPrice || '');
-            if(p) {
-                await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
-                showPriceProposedEmail({ ...b, finalPrice: p });
-            }
-        };
+        if (cat.items.length === 0) {
+            list.innerHTML = `<p style="text-align:center; color:#6b7280; padding:60px; font-size:13px;">Não existem serviços em "${cat.title}".</p>`;
+            return;
+        }
 
-        const confBtn = item.querySelector('.confirm-b');
-        if(confBtn) confBtn.onclick = async () => {
-            if(confirm('Confirmar este agendamento?')) {
-                await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
-                showStatusUpdateEmail({ ...b, status: 'Confirmado' }, false);
-            }
-        };
+        cat.items.forEach(b => {
+            const item = document.createElement('div');
+            item.className = `admin-item ${key}`;
+            item.innerHTML = `
+                <div class="admin-item-info">
+                    <h4>${b.serviceName}</h4>
+                    <p style="font-size:12px; margin-bottom:5px;"><strong>Cliente:</strong> ${b.clientName} | ${b.date} • ${b.time}</p>
+                    <p style="font-size:11px; margin-top:2px;">📍 ${b.address || 'Não definida'}</p>
+                    ${b.observations ? `<p style="font-size:11px; color:#6b7280; font-style:italic; margin-top:4px;">"${b.observations}"</p>` : ''}
+                    <div style="margin-top:8px">
+                        <span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span>
+                        ${b.finalPrice ? `<span class="price-pill" style="margin-left:5px;">${b.finalPrice}€</span>` : ''}
+                    </div>
+                </div>
+                <div class="actions" style="flex-direction: column; gap: 6px;">
+                    ${b.status === 'Pendente' ? `<button class="btn-small set-p" style="background:var(--primary-yellow-vibrant);">Preço</button>` : ''}
+                    ${b.status === 'Pendente' && b.finalPrice ? `<button class="btn-small confirm-b" style="background:#4ade80; color:white;">Validar</button>` : ''}
+                    ${b.status !== 'Cancelado' && b.status !== 'Recusado' ? `<button class="btn-small cancel-admin-b" style="background:#fee2e2; color:#b91c1c;">X</button>` : ''}
+                    <button class="icon-btn del-b" style="color:#ef4444; margin-top:4px;"><i data-lucide="trash-2" style="width:16px"></i></button>
+                </div>
+            `;
 
-        const cancBtn = item.querySelector('.cancel-admin-b');
-        if(cancBtn) cancBtn.onclick = async () => {
-            if(confirm('Cancelar este agendamento?')) {
-                const updated = { ...b, status: 'Cancelado' };
-                await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
-                showStatusUpdateEmail(updated, false); // false = Por iniciativa do admin
-            }
-        };
-        item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
-        list.appendChild(item);
+            const pBtn = item.querySelector('.set-p');
+            if(pBtn) pBtn.onclick = async (e) => {
+                e.stopPropagation();
+                const p = prompt('Preço final (€)?', b.finalPrice || '');
+                if(p) {
+                    await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
+                    showPriceProposedEmail({ ...b, finalPrice: p });
+                }
+            };
+
+            const confBtn = item.querySelector('.confirm-b');
+            if(confBtn) confBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if(confirm('Confirmar este agendamento?')) {
+                    await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
+                    showStatusUpdateEmail({ ...b, status: 'Confirmado' }, false);
+                }
+            };
+
+            const cancBtn = item.querySelector('.cancel-admin-b');
+            if(cancBtn) cancBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if(confirm('Cancelar este agendamento?')) {
+                    const updated = { ...b, status: 'Cancelado' };
+                    await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
+                    showStatusUpdateEmail(updated, false);
+                }
+            };
+
+            const delB = item.querySelector('.del-b');
+            if(delB) delB.onclick = async (e) => { 
+                e.stopPropagation();
+                if(confirm('Eliminar permanentemente este registo?')) await remove(ref(db, "bookings/" + b.id)); 
+            };
+
+            list.appendChild(item);
+        });
     });
     window.lucide.createIcons();
 }

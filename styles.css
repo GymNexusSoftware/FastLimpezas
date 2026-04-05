@@ -280,33 +280,41 @@ header {
     color: var(--primary-green-dark);
 }
 
-/* --- Booking Tabs (Pill Style) --- */
+/* --- Booking Tabs (Premium Segmented Control) --- */
 .booking-tabs {
-    background: #f3f4f6;
-    padding: 4px;
-    border-radius: var(--radius-md);
+    background: #f1f1f1;
+    padding: 3px;
+    border-radius: 14px;
     display: flex;
     gap: 4px;
-    margin-bottom: 20px;
+    margin: 15px 0 25px;
+    border: 1px solid #e5e7eb;
 }
 
 .tab-btn, .admin-tab-btn {
     flex: 1;
     border: none;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 12px;
+    padding: 9px 5px;
+    border-radius: 11px;
+    font-size: 11px;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     cursor: pointer;
     background: transparent;
-    color: var(--text-muted);
-    transition: 0.3s;
+    color: #6b7280;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-btn.active, .admin-tab-btn.active {
     background: white;
     color: var(--text-main);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transform: scale(1.02);
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.4);
 }
 
 .booking-category-header {
