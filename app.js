@@ -182,10 +182,26 @@ function switchView(view) {
 }
 
 function updateStats() {
-    const clientsVal = document.getElementById('stat-clients-val');
-    const bookingsVal = document.getElementById('stat-bookings-val');
-    if(clientsVal) clientsVal.textContent = state.clients.length;
-    if(bookingsVal) bookingsVal.textContent = state.bookings.length;
+    const statTotal = document.getElementById('stat-total');
+    const statPending = document.getElementById('stat-pending');
+    const statClients = document.getElementById('stat-clients-val');
+    
+    if(!statTotal && !statPending && !statClients) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    // Filtrar apenas o que está "em mãos" (Futuro e não cancelado)
+    const scheduledOnly = state.bookings.filter(b => {
+        const isCancelled = b.status === 'Cancelado' || b.status === 'Recusado';
+        const isPast = b.date < todayStr;
+        return !isCancelled && !isPast;
+    });
+
+    const pending = state.bookings.filter(b => b.status === 'Pendente').length;
+    
+    if(statTotal) statTotal.textContent = scheduledOnly.length;
+    if(statPending) statPending.textContent = pending;
+    if(statClients) statClients.textContent = state.clients.length;
 }
 
 function renderClientView() {
