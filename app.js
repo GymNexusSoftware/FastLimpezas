@@ -54,6 +54,7 @@ function initFirebaseSync() {
     onValue(ref(db, "bookings"), (s) => {
         const v = s.val();
         state.bookings = v ? Object.keys(v).map(k => ({ id: k, ...v[k] })) : [];
+        updateStats(); // <--- Agora os números atualizam sozinhos aqui!
         renderGlobalAgenda();
         renderClientView();
     });
