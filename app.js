@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let state = {
-    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming', adminEmail: 'fastlimpezas@gmail.pt'
+    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming', adminEmail: 'fastlimpezas@gmail.com'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
