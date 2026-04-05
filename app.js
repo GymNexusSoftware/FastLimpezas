@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let state = {
-    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming', adminEmail: 'fastlimpezas@gmail.com'
+    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming', activeAdminTab: 'upcoming', adminEmail: 'fastlimpezas@gmail.com'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -111,6 +111,14 @@ function initEventListeners() {
             state.activeBookingTab = btn.dataset.tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
             renderClientView();
+        };
+    });
+
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            state.activeAdminTab = btn.dataset.tab;
+            document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+            renderGlobalAgenda();
         };
     });
 }
@@ -348,9 +356,31 @@ function renderAdminClients() {
 function renderGlobalAgenda() {
     const list = document.getElementById('all-bookings-list'); if(!list) return;
     list.innerHTML = '';
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const categories = {
+        upcoming: { title: 'Próximos', items: [], icon: 'calendar-days' },
+        history: { title: 'Histórico', items: [], icon: 'history' },
+        cancelled: { title: 'Cancelados', items: [], icon: 'x-circle' }
+    };
+
     state.bookings.forEach(b => {
+        const isCancelled = b.status === 'Cancelado' || b.status === 'Recusado';
+        const isPast = b.date < todayStr;
+        if (isCancelled) categories.cancelled.items.push(b);
+        else if (isPast) categories.history.items.push(b);
+        else categories.upcoming.items.push(b);
+    });
+
+    const activeCat = categories[state.activeAdminTab];
+    if(activeCat.items.length === 0) {
+        list.innerHTML = `<p style="text-align:center; color:#6b7280; padding:40px; font-size:13px;">Não existem serviços nesta categoria.</p>`;
+        return;
+    }
+
+    activeCat.items.forEach(b => {
         const item = document.createElement('div');
-        item.className = 'admin-item';
+        item.className = `admin-item ${state.activeAdminTab}`;
         item.innerHTML = `
             <div class="admin-item-info">
                 <h4>${b.serviceName}</h4>
