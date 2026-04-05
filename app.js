@@ -148,6 +148,7 @@ function switchView(view) {
         document.getElementById('client-view').classList.remove('hidden');
         document.getElementById('client-home-content').classList.toggle('hidden', view !== 'client');
         document.getElementById('client-bookings-content').classList.toggle('hidden', view !== 'client-bookings');
+        document.getElementById('client-contacts-content').classList.toggle('hidden', view !== 'client-contacts');
     }
     window.lucide.createIcons();
     updateStats();

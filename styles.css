@@ -376,3 +376,104 @@ header {
 }
 .spinner { width: 40px; height: 40px; border: 4px solid var(--primary-yellow); border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Contact Page Styles --- */
+.contacts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.contact-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    border: 1px solid #f3f4f6;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-soft);
+}
+
+.contact-card:hover {
+    transform: translateX(5px);
+    border-color: var(--primary-yellow-vibrant);
+}
+
+.contact-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.contact-icon.phone { background: linear-gradient(135deg, #4ade80, #22c55e); }
+.contact-icon.email { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+
+.contact-icon svg { width: 22px; height: 22px; }
+
+.contact-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-info .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.contact-info .value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.contact-card .arrow {
+    color: #d1d5db;
+    width: 18px;
+}
+
+.contact-support-card {
+    margin-top: 30px;
+    background: var(--primary-yellow);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px dashed var(--primary-yellow-vibrant);
+}
+
+.contact-support-card svg {
+    color: var(--primary-green);
+    width: 24px;
+    height: 24px;
+}
+
+.contact-support-card p {
+    font-size: 13px;
+    color: var(--primary-green-dark);
+    line-height: 1.5;
+}
+
+.section-title h3 {
+    font-size: 24px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+}
+
+.section-title .subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
