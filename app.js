@@ -425,20 +425,27 @@ function triggerEmailSimulation(to, subject, content) {
     if(!body) return;
     
     body.innerHTML = content;
+    const footer = document.getElementById('email-footer-actions');
+    const mailtoBtn = document.getElementById('open-native-email');
+    if(footer) footer.classList.add('hidden');
     overlay.classList.remove('hidden');
     success.classList.add('hidden');
-    closeBtn.classList.add('hidden');
+    
     // Link para App Nativa (Mailto)
     const plainText = content.replace(/<[^>]+>/g, ' ').replace(/\s\s+/g, ' ').trim();
-    const mailtoBtn = document.getElementById('open-native-email');
     if(mailtoBtn) {
-        mailtoBtn.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainText)}`;
+        mailtoBtn.href = "#"; // Reset
+        mailtoBtn.onclick = (e) => {
+            e.preventDefault();
+            window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainText)}`;
+        };
     }
+
     document.getElementById('email-modal').classList.remove('hidden');
     window.lucide.createIcons();
 
     // Envio Real via EmailJS (Opcional)
-    if (window.emailjs && to !== "admin@fastlimpezas.com") { // Exemplo simples
+    if (window.emailjs && to !== "admin@fastlimpezas.com") {
         emailjs.send("SERVICE_ID", "TEMPLATE_ID", {
             to_email: to,
             subject: subject,
@@ -452,7 +459,7 @@ function triggerEmailSimulation(to, subject, content) {
         success.classList.remove('hidden');
         setTimeout(() => {
             success.classList.add('hidden');
-            closeBtn.classList.remove('hidden');
+            if(footer) footer.classList.remove('hidden');
         }, 1200);
     }, 1500);
 }
