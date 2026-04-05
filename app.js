@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let state = {
-    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming'
+    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming', adminEmail: 'fastlimpezas@gmail.pt'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -536,22 +536,21 @@ function showWelcomeEmail(e, p) {
 }
 
 function showNewBookingEmail(bk) { 
-    const subject = "Confirmamos a receção do seu pedido 📝";
+    const subject = "Novo Pedido de Limpeza - " + bk.clientName;
     const content = `
         <div style="font-family: 'Outfit', sans-serif;">
-            <h2 style="color: #2D5A27; margin-bottom: 20px;">Recebemos o seu Pedido</h2>
-            <p>Informamos que o seu pedido para o serviço <strong>${bk.serviceName}</strong> foi registado com sucesso no nosso sistema.</p>
+            <h2 style="color: #2D5A27; margin-bottom: 20px;">Novo Pedido Recebido</h2>
+            <p>Um novo pedido de limpeza foi registado por <strong>${bk.clientName}</strong> (${bk.clientEmail}).</p>
             <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #eee;">
+                <p style="margin: 5px 0;">🛋️ <strong>Serviço:</strong> ${bk.serviceName}</p>
                 <p style="margin: 5px 0;">📅 <strong>Data:</strong> ${bk.date}</p>
                 <p style="margin: 5px 0;">⏰ <strong>Hora:</strong> ${bk.time}</p>
-                <p style="margin: 5px 0;">📍 <strong>Morada:</strong> ${bk.address || 'Não definida'}</p>
+                <p style="margin: 5px 0;">📍 <strong>Morada:</strong> ${bk.address}</p>
             </div>
-            <p>A nossa equipa administrativa irá agora validar o agendamento e, caso seja necessário, atribuir o orçamento final.</p>
-            <p>Entraremos em contacto brevemente.</p>
-            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">Atenciosamente,<br><strong>Equipa FastLimpezas</strong></p>
+            <p>Por favor, aceda ao painel administrativo para validar o agendamento.</p>
         </div>
     `;
-    triggerEmailSimulation(bk.clientEmail, subject, content); 
+    triggerEmailSimulation(state.adminEmail, subject, content); 
 }
 
 function showPriceProposedEmail(bk) { 
@@ -619,10 +618,11 @@ function showStatusUpdateEmail(bk, isClientAction = false) {
             <h2 style="color: #2D5A27; margin-bottom: 20px;">Estado do Serviço</h2>
             ${messageHtml}
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #6B7280; font-size: 13px;">Obrigado,<br><strong>A Equipa FastLimpezas</strong></p>
+            <p style="color: #6B7280; font-size: 13px;">Obrigado,<br><strong>Equipa FastLimpezas</strong></p>
         </div>
     `;
-    triggerEmailSimulation(bk.clientEmail, subject, content); 
+    const targetEmail = isClientAction ? state.adminEmail : bk.clientEmail;
+    triggerEmailSimulation(targetEmail, subject, content); 
 }
 
 function openBookingModal(s = null) {
