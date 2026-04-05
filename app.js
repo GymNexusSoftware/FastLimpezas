@@ -433,8 +433,18 @@ function triggerEmailSimulation(to, subject, content) {
     overlay.classList.remove('hidden');
     success.classList.add('hidden');
     
-    // Link para App Nativa (Mailto)
-    const plainText = content.replace(/<[^>]+>/g, ' ').replace(/\s\s+/g, ' ').trim();
+    // Link para App Nativa (Mailto) - Conversão melhorada para texto limpo
+    const plainText = content
+        .replace(/<h[1-6][^>]*>/gi, '\n\n') 
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<p[^>]*>/gi, '\n') 
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '\n')
+        .replace(/<hr[^>]*>/gi, '\n-------------------\n')
+        .replace(/<[^>]+>/g, '') 
+        .replace(/\n\s*\n/g, '\n\n') 
+        .trim();
+
     if(mailtoBtn) {
         mailtoBtn.href = "#"; // Reset
         mailtoBtn.onclick = (e) => {
@@ -499,7 +509,7 @@ function showNewBookingEmail(bk) {
             </div>
             <p>A nossa equipa administrativa irá agora validar o agendamento e, caso seja necessário, atribuir o orçamento final.</p>
             <p>Entraremos em contacto brevemente.</p>
-            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">FastLimpezas - Higiene de Excelência</p>
+            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">Atenciosamente,<br><strong>Equipa FastLimpezas</strong></p>
         </div>
     `;
     triggerEmailSimulation(bk.clientEmail, subject, content); 
