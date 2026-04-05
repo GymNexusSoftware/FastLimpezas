@@ -465,31 +465,90 @@ function triggerEmailSimulation(to, subject, content) {
 }
 
 function showWelcomeEmail(e, p) { 
-    const subject = "Bem-vindo à FastLimpezas!";
-    const content = `<h3>Bem-vindo à FastLimpezas</h3><p>Olá,</p><hr><p>A sua conta foi criada com sucesso.</p><div class="credentials-box"><p>Email: <strong>${e}</strong></p><p>Senha: <strong>${p}</strong></p></div><p>Acede já para marcar a tua primeira limpeza!</p>`;
+    const subject = "Bem-vindo à Família FastLimpezas 💎";
+    const content = `
+        <div style="font-family: 'Outfit', sans-serif;">
+            <h2 style="color: #2D5A27; margin-bottom: 20px;">Bem-vindo à Experiência FastLimpezas</h2>
+            <p>Estimado cliente,</p>
+            <p>É com enorme prazer que confirmamos a criação da sua conta no nosso portal premium de agendamentos.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p>Para aceder à sua área reservada, utilize as seguintes credenciais:</p>
+            <div style="background: #F9F1C5; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #FFD700;">
+                <p style="margin: 5px 0;"><strong>Utilizador:</strong> ${e}</p>
+                <p style="margin: 5px 0;"><strong>Palavra-passe:</strong> ${p}</p>
+            </div>
+            <p>A partir de agora, agendar os seus serviços de limpeza está apenas a um clique de distância.</p>
+            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">Atenciosamente,<br><strong>Equipa FastLimpezas</strong></p>
+        </div>
+    `;
     triggerEmailSimulation(e, subject, content); 
 }
 
 function showNewBookingEmail(bk) { 
-    const subject = "Pedido de Limpeza Recebido";
-    const content = `<h3>Pedido de Limpeza Recebido</h3><p>Confirmamos que recebemos o seu pedido para <strong>${bk.serviceName}</strong>.</p><p>Data: <strong>${bk.date}</strong> às <strong>${bk.time}</strong>.</p><hr><p>Iremos analisar o seu pedido e entraremos em contacto brevemente.</p>`;
+    const subject = "Confirmamos a receção do seu pedido 📝";
+    const content = `
+        <div style="font-family: 'Outfit', sans-serif;">
+            <h2 style="color: #2D5A27; margin-bottom: 20px;">Recebemos o seu Pedido</h2>
+            <p>Informamos que o seu pedido para o serviço <strong>${bk.serviceName}</strong> foi registado com sucesso no nosso sistema.</p>
+            <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #eee;">
+                <p style="margin: 5px 0;">📅 <strong>Data:</strong> ${bk.date}</p>
+                <p style="margin: 5px 0;">⏰ <strong>Hora:</strong> ${bk.time}</p>
+                <p style="margin: 5px 0;">📍 <strong>Morada:</strong> ${bk.address || 'Não definida'}</p>
+            </div>
+            <p>A nossa equipa administrativa irá agora validar o agendamento e, caso seja necessário, atribuir o orçamento final.</p>
+            <p>Entraremos em contacto brevemente.</p>
+            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">FastLimpezas - Higiene de Excelência</p>
+        </div>
+    `;
     triggerEmailSimulation(bk.clientEmail, subject, content); 
 }
 
 function showPriceProposedEmail(bk) { 
-    const subject = "Orçamento Proposto - FastLimpezas";
-    const content = `<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza de <strong>${bk.serviceName}</strong>.</p><hr><p>Pode aceitar ou propor alterações através da aplicação clicando em "Limpezas".</p>`;
+    const subject = "Orçamento Disponível para a sua Limpeza 💰";
+    const content = `
+        <div style="font-family: 'Outfit', sans-serif;">
+            <h2 style="color: #2D5A27; margin-bottom: 20px;">Orçamento Estimado</h2>
+            <p>Estimado(a) <strong>${bk.clientName}</strong>, informamos que já se encontra disponível para consulta o orçamento para o seu próximo serviço.</p>
+            <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; border: 2px solid #a7f3d0;">
+                <p style="font-size: 12px; color: #047857; text-transform: uppercase; font-weight: 800; margin-bottom: 5px;">Valor Proposto</p>
+                <p style="font-size: 32px; font-weight: 800; color: #065f46; margin: 0;">${bk.finalPrice}€</p>
+            </div>
+            <p>Poderá aceitar ou recusar este valor diretamente no separador <strong>"Limpezas"</strong> da nossa aplicação.</p>
+            <p>Ficamos a aguardar a sua confirmação para prosseguir com o agendamento.</p>
+            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">Atenciosamente,<br>A Gestão FastLimpezas</p>
+        </div>
+    `;
     triggerEmailSimulation(bk.clientEmail, subject, content); 
 }
 
 function showStatusUpdateEmail(bk) { 
-    const subject = "Atualização do seu Serviço";
-    let msg = "";
-    if(bk.status === 'Confirmado') msg = `O seu serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> foi <strong>Confirmado</strong>.`;
-    else if(bk.status === 'Cancelado') msg = `O serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> foi <strong>Cancelado</strong>.`;
-    else if(bk.status === 'Recusado') msg = `O orçamento para o serviço de <strong>${bk.serviceName}</strong> foi <strong>Recusado</strong>.`;
+    const isConfirm = bk.status === 'Confirmado';
+    const isCancel = bk.status === 'Cancelado';
+    const subject = isConfirm ? "Serviço Confirmado ✅" : (isCancel ? "Serviço Cancelado ❌" : "Atualização de Serviço ℹ️");
     
-    const content = `<h3>Atualização de Serviço</h3><p>Olá ${bk.clientName || 'Cliente'},</p><hr><p>${msg}</p><p>Obrigado por escolher a FastLimpezas!</p>`;
+    let messageHtml = "";
+    if(isConfirm) {
+        messageHtml = `
+            <p>Temos o prazer de informar que o seu serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> está oficialmente <strong>Confirmado</strong>.</p>
+            <p>A nossa equipa comparecerá na morada indicada às ${bk.time}. Sugerimos que garanta o acesso ao local no horário previsto.</p>
+        `;
+    } else if(isCancel) {
+        messageHtml = `
+            <p>Informamos que o serviço de <strong>${bk.serviceName}</strong> agendado para o dia <strong>${bk.date}</strong> foi <strong>Cancelado</strong>.</p>
+            <p>Caso deseje reagendar, poderá fazê-lo a qualquer momento através do portal.</p>
+        `;
+    } else {
+        messageHtml = `<p>O estado do seu serviço de <strong>${bk.serviceName}</strong> (${bk.date}) foi atualizado para: <strong>${bk.status}</strong>.</p>`;
+    }
+
+    const content = `
+        <div style="font-family: 'Outfit', sans-serif;">
+            <h2 style="color: #2D5A27; margin-bottom: 20px;">Estado do Serviço</h2>
+            ${messageHtml}
+            <p style="margin-top: 20px;">Qualquer dúvida, não hesite em contactar-nos através da aplicação.</p>
+            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">Equipa de Gestão FastLimpezas</p>
+        </div>
+    `;
     triggerEmailSimulation(bk.clientEmail, subject, content); 
 }
 
