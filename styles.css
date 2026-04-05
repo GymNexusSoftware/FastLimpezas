@@ -280,6 +280,35 @@ header {
     color: var(--primary-green-dark);
 }
 
+/* --- Booking Tabs (Pill Style) --- */
+.booking-tabs {
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: var(--radius-md);
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: 0.3s;
+}
+
+.tab-btn.active {
+    background: white;
+    color: var(--text-main);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
 .booking-category-header {
     display: flex;
     align-items: center;

@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let state = {
-    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: []
+    currentUser: null, activeView: 'client', cleaningTypes: [], bookings: [], clients: [], activeBookingTab: 'upcoming'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,6 +103,14 @@ function initEventListeners() {
         item.onclick = (e) => {
             e.preventDefault();
             switchView(item.dataset.view);
+        };
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            state.activeBookingTab = btn.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+            renderClientView();
         };
     });
 }
@@ -225,13 +233,12 @@ function renderClientView() {
 
     Object.keys(categories).forEach(key => {
         const cat = categories[key];
-        if (cat.items.length === 0) return;
+        if (key !== state.activeBookingTab) return; // Só mostra a aba ativa
 
-        // Header da Categoria
-        const header = document.createElement('div');
-        header.className = 'booking-category-header';
-        header.innerHTML = `<i data-lucide="${cat.icon}"></i> <span>${cat.title}</span>`;
-        myList.appendChild(header);
+        if (cat.items.length === 0) {
+            myList.innerHTML = `<p style="text-align:center; color:#6b7280; padding:40px; font-size:13px;">Não existem serviços em "${cat.title}".</p>`;
+            return;
+        }
 
         cat.items.forEach(b => {
             const item = document.createElement('div');
