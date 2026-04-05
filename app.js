@@ -234,21 +234,22 @@ function renderClientView() {
                     item.querySelector('.accept-p').onclick = async () => {
                         if(confirm('Confirma o agendamento por este valor €?')) {
                             await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
-                            showStatusUpdateEmail({ ...b, status: 'Confirmado' });
+                            showStatusUpdateEmail({ ...b, status: 'Confirmado' }, true);
                         }
                     };
                     item.querySelector('.reject-p').onclick = async () => {
                         if(confirm('Deseja recusar este orçamento?')) {
                             await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
-                            showStatusUpdateEmail({ ...b, status: 'Recusado' });
+                            showStatusUpdateEmail({ ...b, status: 'Recusado' }, true);
                         }
                     };
                 }
                 if(isCancellable) {
                     item.querySelector('.cancel-b').onclick = async () => {
                         if(confirm('Deseja cancelar esta limpeza?')) {
+                            const updated = { ...b, status: 'Cancelado' };
                             await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
-                            showStatusUpdateEmail({ ...b, status: 'Cancelado' });
+                            showStatusUpdateEmail(updated, true); // true = Por iniciativa do cliente
                         }
                     };
                 }
@@ -339,15 +340,16 @@ function renderGlobalAgenda() {
         if(confBtn) confBtn.onclick = async () => {
             if(confirm('Confirmar este agendamento?')) {
                 await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
-                showStatusUpdateEmail({ ...b, status: 'Confirmado' });
+                showStatusUpdateEmail({ ...b, status: 'Confirmado' }, false);
             }
         };
 
         const cancBtn = item.querySelector('.cancel-admin-b');
         if(cancBtn) cancBtn.onclick = async () => {
             if(confirm('Cancelar este agendamento?')) {
+                const updated = { ...b, status: 'Cancelado' };
                 await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
-                showStatusUpdateEmail({ ...b, status: 'Cancelado' });
+                showStatusUpdateEmail(updated, false); // false = Por iniciativa do admin
             }
         };
         item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
@@ -521,22 +523,39 @@ function showPriceProposedEmail(bk) {
     triggerEmailSimulation(bk.clientEmail, subject, content); 
 }
 
-function showStatusUpdateEmail(bk) { 
+function showStatusUpdateEmail(bk, isClientAction = false) { 
     const isConfirm = bk.status === 'Confirmado';
     const isCancel = bk.status === 'Cancelado';
+    const isReject = bk.status === 'Recusado';
     const subject = isConfirm ? "Serviço Confirmado ✅" : (isCancel ? "Serviço Cancelado ❌" : "Atualização de Serviço ℹ️");
     
     let messageHtml = "";
     if(isConfirm) {
-        messageHtml = `
-            <p>Temos o prazer de informar que o seu serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> está oficialmente <strong>Confirmado</strong>.</p>
-            <p>A nossa equipa comparecerá na morada indicada às ${bk.time}. Sugerimos que garanta o acesso ao local no horário previsto.</p>
-        `;
+        if(isClientAction) {
+            messageHtml = `
+                <p>Confirmamos que <strong>aceitou o orçamento</strong> para o serviço de <strong>${bk.serviceName}</strong>.</p>
+                <p>O agendamento para o dia <strong>${bk.date} às ${bk.time}</strong> está agora validado.</p>
+            `;
+        } else {
+            messageHtml = `
+                <p>Informamos que o seu serviço de <strong>${bk.serviceName}</strong> agendado para o dia <strong>${bk.date}</strong> foi <strong>Confirmado por nós</strong>.</p>
+                <p>A nossa equipa comparecerá no local às ${bk.time}.</p>
+            `;
+        }
     } else if(isCancel) {
-        messageHtml = `
-            <p>Informamos que o serviço de <strong>${bk.serviceName}</strong> agendado para o dia <strong>${bk.date}</strong> foi <strong>Cancelado</strong>.</p>
-            <p>Caso deseje reagendar, poderá fazê-lo a qualquer momento através do portal.</p>
-        `;
+        if(isClientAction) {
+            messageHtml = `
+                <p>Confirmamos o seu **pedido de cancelamento** para o serviço de <strong>${bk.serviceName}</strong> (${bk.date}).</p>
+                <p>Lamentamos que não tenha sido desta vez, mas esperamos vê-lo em breve.</p>
+            `;
+        } else {
+            messageHtml = `
+                <p><strong>Aviso Importante:</strong> Lamentamos informar que o seu serviço de <strong>${bk.serviceName}</strong> agendado para o dia <strong>${bk.date}</strong> foi <strong>Cancelado pela Equipa de Gestão</strong>.</p>
+                <p>Pode entrar em contacto connosco para reagendamento se desejar.</p>
+            `;
+        }
+    } else if(isReject) {
+        messageHtml = `<p>O orçamento para o serviço de <strong>${bk.serviceName}</strong> foi recusado. Pedimos desculpa por não termos atingido as suas expectativas.</p>`;
     } else {
         messageHtml = `<p>O estado do seu serviço de <strong>${bk.serviceName}</strong> (${bk.date}) foi atualizado para: <strong>${bk.status}</strong>.</p>`;
     }
@@ -545,8 +564,7 @@ function showStatusUpdateEmail(bk) {
         <div style="font-family: 'Outfit', sans-serif;">
             <h2 style="color: #2D5A27; margin-bottom: 20px;">Estado do Serviço</h2>
             ${messageHtml}
-            <p style="margin-top: 20px;">Qualquer dúvida, não hesite em contactar-nos através da aplicação.</p>
-            <p style="color: #6B7280; font-size: 13px; margin-top: 25px;">Equipa de Gestão FastLimpezas</p>
+            <p style="margin-top: 20px;">Atenciosamente,<br><strong>A Equipa FastLimpezas</strong></p>
         </div>
     `;
     triggerEmailSimulation(bk.clientEmail, subject, content); 
