@@ -29,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
         state.currentUser = JSON.parse(saved);
         loginSuccess();
     }
+    
+    // Inicia EmailJS (Deixo os placeholders para preencheres)
+    if (window.emailjs) {
+        emailjs.init({
+          publicKey: "TEMPLATE_PUBLIC_KEY", // SUBSTITUI POR TUA CHAVE PÚBLICA
+        });
+    }
 });
 
 function initFirebaseSync() {
@@ -410,17 +417,36 @@ async function saveClient() {
     showToast('Cliente Salvo!');
 }
 
-function triggerEmailSimulation(content) {
+function triggerEmailSimulation(to, subject, content) {
     const body = document.getElementById('email-body-content');
     const overlay = document.getElementById('email-sending-overlay');
     const success = document.getElementById('email-sent-success');
     const closeBtn = document.getElementById('close-email-modal');
     if(!body) return;
+    
     body.innerHTML = content;
     overlay.classList.remove('hidden');
     success.classList.add('hidden');
     closeBtn.classList.add('hidden');
+    // Link para App Nativa (Mailto)
+    const plainText = content.replace(/<[^>]+>/g, ' ').replace(/\s\s+/g, ' ').trim();
+    const mailtoBtn = document.getElementById('open-native-email');
+    if(mailtoBtn) {
+        mailtoBtn.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainText)}`;
+    }
     document.getElementById('email-modal').classList.remove('hidden');
+    window.lucide.createIcons();
+
+    // Envio Real via EmailJS (Opcional)
+    if (window.emailjs && to !== "admin@fastlimpezas.com") { // Exemplo simples
+        emailjs.send("SERVICE_ID", "TEMPLATE_ID", {
+            to_email: to,
+            subject: subject,
+            message_html: content
+        }).then(() => console.log("Real Email Sent!"))
+          .catch(err => console.error("EmailJS Error:", err));
+    }
+
     setTimeout(() => {
         overlay.classList.add('hidden');
         success.classList.remove('hidden');
@@ -431,16 +457,33 @@ function triggerEmailSimulation(content) {
     }, 1500);
 }
 
-function showWelcomeEmail(e, p) { triggerEmailSimulation(`<h3>Bem-vindo à FastLimpezas</h3><p>Para: ${e}</p><hr><p>A sua conta foi criada com sucesso.</p><div class="credentials-box"><p>Email: <strong>${e}</strong></p><p>Senha: <strong>${p}</strong></p></div>`); }
-function showNewBookingEmail(bk) { triggerEmailSimulation(`<h3>Pedido de Limpeza Recebido</h3><p>Confirmamos que recebemos o seu pedido para <strong>${bk.serviceName}</strong>.</p><p>Data: <strong>${bk.date}</strong> às <strong>${bk.time}</strong>.</p><hr><p>Iremos analisar o seu pedido e entraremos em contacto brevemente.</p>`); }
-function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza.</p><hr><p>Pode aceitar ou propor alterações através da aplicação clicando em "Limpezas".</p>`); }
+function showWelcomeEmail(e, p) { 
+    const subject = "Bem-vindo à FastLimpezas!";
+    const content = `<h3>Bem-vindo à FastLimpezas</h3><p>Olá,</p><hr><p>A sua conta foi criada com sucesso.</p><div class="credentials-box"><p>Email: <strong>${e}</strong></p><p>Senha: <strong>${p}</strong></p></div><p>Acede já para marcar a tua primeira limpeza!</p>`;
+    triggerEmailSimulation(e, subject, content); 
+}
+
+function showNewBookingEmail(bk) { 
+    const subject = "Pedido de Limpeza Recebido";
+    const content = `<h3>Pedido de Limpeza Recebido</h3><p>Confirmamos que recebemos o seu pedido para <strong>${bk.serviceName}</strong>.</p><p>Data: <strong>${bk.date}</strong> às <strong>${bk.time}</strong>.</p><hr><p>Iremos analisar o seu pedido e entraremos em contacto brevemente.</p>`;
+    triggerEmailSimulation(bk.clientEmail, subject, content); 
+}
+
+function showPriceProposedEmail(bk) { 
+    const subject = "Orçamento Proposto - FastLimpezas";
+    const content = `<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza de <strong>${bk.serviceName}</strong>.</p><hr><p>Pode aceitar ou propor alterações através da aplicação clicando em "Limpezas".</p>`;
+    triggerEmailSimulation(bk.clientEmail, subject, content); 
+}
+
 function showStatusUpdateEmail(bk) { 
+    const subject = "Atualização do seu Serviço";
     let msg = "";
     if(bk.status === 'Confirmado') msg = `O seu serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> foi <strong>Confirmado</strong>.`;
     else if(bk.status === 'Cancelado') msg = `O serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> foi <strong>Cancelado</strong>.`;
     else if(bk.status === 'Recusado') msg = `O orçamento para o serviço de <strong>${bk.serviceName}</strong> foi <strong>Recusado</strong>.`;
     
-    triggerEmailSimulation(`<h3>Atualização de Serviço</h3><p>Olá ${bk.clientName || 'Cliente'},</p><hr><p>${msg}</p><p>Obrigado por escolher a FastLimpezas!</p>`); 
+    const content = `<h3>Atualização de Serviço</h3><p>Olá ${bk.clientName || 'Cliente'},</p><hr><p>${msg}</p><p>Obrigado por escolher a FastLimpezas!</p>`;
+    triggerEmailSimulation(bk.clientEmail, subject, content); 
 }
 
 function openBookingModal(s = null) {
