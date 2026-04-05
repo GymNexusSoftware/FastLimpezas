@@ -506,20 +506,31 @@ async function saveClient() {
 }
 
 function triggerEmailSimulation(to, subject, content) {
-    const body = document.getElementById('email-body-content');
+    if(!to) { 
+        console.error("Erro: Destinatário em falta."); 
+        showToast("Erro: Email do cliente não encontrado.");
+        return; 
+    }
+    
     const overlay = document.getElementById('email-sending-overlay');
     const success = document.getElementById('email-sent-success');
     const closeBtn = document.getElementById('close-email-modal');
-    if(!body) return;
-    
-    body.innerHTML = content;
     const footer = document.getElementById('email-footer-actions');
     const mailtoBtn = document.getElementById('open-native-email');
+    
+    // Preencher o modal
+    document.getElementById('email-modal-to').innerText = to;
+    document.getElementById('email-modal-subject').innerText = subject;
+    document.getElementById('email-modal-body').innerHTML = content;
+    document.getElementById('email-modal').classList.remove('hidden');
+
+    // Estado inicial
     if(footer) footer.classList.add('hidden');
+    if(closeBtn) closeBtn.classList.add('hidden');
     overlay.classList.remove('hidden');
     success.classList.add('hidden');
     
-    // Link para App Nativa (Mailto) - Conversão melhorada para texto limpo
+    // Texto Simples para Mailto
     const plainText = content
         .replace(/<h[1-6][^>]*>/gi, '\n\n') 
         .replace(/<\/h[1-6]>/gi, '\n')
@@ -532,34 +543,23 @@ function triggerEmailSimulation(to, subject, content) {
         .trim();
 
     if(mailtoBtn) {
-        mailtoBtn.href = "#"; // Reset
         mailtoBtn.onclick = (e) => {
             e.preventDefault();
             window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainText)}`;
         };
     }
 
-    document.getElementById('email-modal').classList.remove('hidden');
-    window.lucide.createIcons();
-
-    // Envio Real via EmailJS (Opcional)
-    if (window.emailjs && to !== "admin@fastlimpezas.com") {
-        emailjs.send("SERVICE_ID", "TEMPLATE_ID", {
-            to_email: to,
-            subject: subject,
-            message_html: content
-        }).then(() => console.log("Real Email Sent!"))
-          .catch(err => console.error("EmailJS Error:", err));
-    }
-
+    // Animação de envio
     setTimeout(() => {
         overlay.classList.add('hidden');
         success.classList.remove('hidden');
         setTimeout(() => {
-            success.classList.add('hidden');
             if(footer) footer.classList.remove('hidden');
-        }, 1200);
+            if(closeBtn) closeBtn.classList.remove('hidden');
+        }, 500);
     }, 1500);
+
+    window.lucide.createIcons();
 }
 
 function showWelcomeEmail(e, p) { 
