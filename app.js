@@ -225,18 +225,24 @@ function renderClientView() {
                 
                 if(isWaiting) {
                     item.querySelector('.accept-p').onclick = async () => {
-                        if(confirm('Confirma o agendamento por este valor €?'))
+                        if(confirm('Confirma o agendamento por este valor €?')) {
                             await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
+                            showStatusUpdateEmail({ ...b, status: 'Confirmado' });
+                        }
                     };
                     item.querySelector('.reject-p').onclick = async () => {
-                        if(confirm('Deseja recusar este orçamento?'))
+                        if(confirm('Deseja recusar este orçamento?')) {
                             await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
+                            showStatusUpdateEmail({ ...b, status: 'Recusado' });
+                        }
                     };
                 }
                 if(isCancellable) {
                     item.querySelector('.cancel-b').onclick = async () => {
-                        if(confirm('Deseja cancelar esta limpeza?'))
+                        if(confirm('Deseja cancelar esta limpeza?')) {
                             await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
+                            showStatusUpdateEmail({ ...b, status: 'Cancelado' });
+                        }
                     };
                 }
                 myList.appendChild(item);
@@ -307,17 +313,34 @@ function renderGlobalAgenda() {
                 <div style="margin-top:5px"><span class="status-badge ${b.status.replace(/ /g,'-').toLowerCase()}">${b.status}</span></div>
             </div>
             <div class="actions">
-                ${b.status === 'Pendente' ? `<button class="btn-small set-p">Definir Preço</button>` : ''}
+                ${b.status === 'Pendente' ? `<button class="btn-small set-p" style="background:var(--primary-yellow-vibrant);">Definir Preço</button>` : ''}
+                ${b.status === 'Pendente' && b.finalPrice ? `<button class="btn-small confirm-b" style="background:#4ade80; color:white;">Confirmar</button>` : ''}
+                ${b.status !== 'Cancelado' && b.status !== 'Recusado' ? `<button class="btn-small cancel-admin-b" style="background:#fee2e2; color:#b91c1c;">Cancelar</button>` : ''}
                 <button class="icon-btn del-b red"><i data-lucide="trash-2" style="width:18px"></i></button>
             </div>
         `;
         const pBtn = item.querySelector('.set-p');
         if(pBtn) pBtn.onclick = async () => {
-            const p = prompt('Preço final (€)?');
+            const p = prompt('Preço final (€)?', b.finalPrice || '');
             if(p) {
-                const updated = { ...b, status: 'Aguardando Cliente', finalPrice: p };
                 await update(ref(db, "bookings/" + b.id), { status: 'Aguardando Cliente', finalPrice: p });
-                showPriceProposedEmail(updated);
+                showPriceProposedEmail({ ...b, finalPrice: p });
+            }
+        };
+
+        const confBtn = item.querySelector('.confirm-b');
+        if(confBtn) confBtn.onclick = async () => {
+            if(confirm('Confirmar este agendamento?')) {
+                await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
+                showStatusUpdateEmail({ ...b, status: 'Confirmado' });
+            }
+        };
+
+        const cancBtn = item.querySelector('.cancel-admin-b');
+        if(cancBtn) cancBtn.onclick = async () => {
+            if(confirm('Cancelar este agendamento?')) {
+                await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
+                showStatusUpdateEmail({ ...b, status: 'Cancelado' });
             }
         };
         item.querySelector('.del-b').onclick = async () => { if(confirm('Remover?')) await remove(ref(db, "bookings/" + b.id)); };
@@ -409,8 +432,16 @@ function triggerEmailSimulation(content) {
 }
 
 function showWelcomeEmail(e, p) { triggerEmailSimulation(`<h3>Bem-vindo à FastLimpezas</h3><p>Para: ${e}</p><hr><p>A sua conta foi criada com sucesso.</p><div class="credentials-box"><p>Email: <strong>${e}</strong></p><p>Senha: <strong>${p}</strong></p></div>`); }
-function showNewBookingEmail(bk) { triggerEmailSimulation(`<h3>Confirmação de Pedido</h3><p>Confirmamos a receção do seu pedido de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong>.</p><p>A nossa equipa irá validar o agendamento em breve.</p>`); }
-function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza.</p><hr><p>Pode aceitar ou propor alterações através da aplicação.</p>`); }
+function showNewBookingEmail(bk) { triggerEmailSimulation(`<h3>Pedido de Limpeza Recebido</h3><p>Confirmamos que recebemos o seu pedido para <strong>${bk.serviceName}</strong>.</p><p>Data: <strong>${bk.date}</strong> às <strong>${bk.time}</strong>.</p><hr><p>Iremos analisar o seu pedido e entraremos em contacto brevemente.</p>`); }
+function showPriceProposedEmail(bk) { triggerEmailSimulation(`<h3>Orçamento Proposto</h3><p>Olá ${bk.clientName}, propomos o valor de <strong>${bk.finalPrice}€</strong> para a sua limpeza.</p><hr><p>Pode aceitar ou propor alterações através da aplicação clicando em "Limpezas".</p>`); }
+function showStatusUpdateEmail(bk) { 
+    let msg = "";
+    if(bk.status === 'Confirmado') msg = `O seu serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> foi <strong>Confirmado</strong>.`;
+    else if(bk.status === 'Cancelado') msg = `O serviço de <strong>${bk.serviceName}</strong> para o dia <strong>${bk.date}</strong> foi <strong>Cancelado</strong>.`;
+    else if(bk.status === 'Recusado') msg = `O orçamento para o serviço de <strong>${bk.serviceName}</strong> foi <strong>Recusado</strong>.`;
+    
+    triggerEmailSimulation(`<h3>Atualização de Serviço</h3><p>Olá ${bk.clientName || 'Cliente'},</p><hr><p>${msg}</p><p>Obrigado por escolher a FastLimpezas!</p>`); 
+}
 
 function openBookingModal(s = null) {
     const sS = document.getElementById('booking-service-select');
@@ -457,20 +488,27 @@ async function handleBookingSubmit() {
 
     const s = state.cleaningTypes.find(t => t.id === sid);
     const c = state.clients.find(cl => cl.id === cid);
+    const isVariable = s.isCustom || !s.price || s.price === '0' || s.price === 0;
     const data = {
         serviceName: s.name, 
         clientName: c.name, 
         clientEmail: c.email,
-        clientId: c.id, // ID Único para filtro seguro
+        clientId: c.id, 
         date: dateVal,
         time: timeVal,
         address: document.getElementById('booking-address').value,
         observations: document.getElementById('booking-observations').value,
-        status: 'Pendente'
+        status: 'Pendente',
+        finalPrice: !isVariable ? s.price : null
     };
     await push(ref(db, "bookings"), data);
     document.getElementById('booking-modal').classList.add('hidden');
-    showNewBookingEmail(data);
+    
+    if(!isVariable) {
+        showNewBookingEmail({ ...data, isDirect: true });
+    } else {
+        showNewBookingEmail(data);
+    }
 }
 
 function showToast(m) {
