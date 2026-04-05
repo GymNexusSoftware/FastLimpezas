@@ -137,16 +137,19 @@ header {
 
 .bottom-nav {
     flex-shrink: 0;
-    position: relative !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    transform: none !important;
-    width: 100% !important;
-    border-radius: 0 !important;
-    padding: 12px 10px 25px !important;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.05) !important;
-    background: #fff;
+    position: absolute !important;
+    bottom: 15px !important;
+    left: 16px !important;
+    right: 16px !important;
+    height: 70px !important;
+    width: auto !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
     display: flex;
+    z-index: 1000;
 }
 
 .nav-item {
@@ -155,20 +158,19 @@ header {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #4b5563; /* Cor sólida */
-    gap: 4px;
+    color: #6b7280;
+    gap: 2px;
     position: relative;
-    padding: 10px 0;
 }
 
 .nav-item svg {
-    width: 28px;
-    height: 28px;
-    stroke-width: 2.5px;
+    width: 24px; /* Voltamos para um tamanho equilibrado */
+    height: 24px;
+    stroke-width: 2.25px;
 }
 
 .nav-item span {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
 }
