@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastLimpezas - Premium Service</title>
-    <!-- Configurações de Ícone e App Mobile -->
-    <link rel="icon" type="image/png" href="iconFastLimpezas.png">
-    <link rel="apple-touch-icon" href="iconFastLimpezas.png">
+    <!-- Configurações PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FFC107">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="styles.css?v=2.0">
+    <link rel="icon" type="image/png" href="iconFastLimpezas.png">
+    <link rel="apple-touch-icon" href="iconFastLimpezas.png">
+    <link rel="stylesheet" href="styles.css?v=2.1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -36,20 +38,24 @@
         <!-- Login Screen -->
         <div id="login-screen" class="overlay active">
             <div class="role-card">
-                <div class="brand" style="text-align: center; margin-bottom: 30px;">
-                    <!-- Logo Principal Local -->
-                    <img src="fastlimpezas.png" 
+                <div class="brand" style="text-align: center; margin-bottom: 25px;">
+                    <img src="iconFastLimpezas.png" 
                          alt="FastLimpezas" 
-                         style="width: 100%; max-width: 280px; border-radius: 12px; margin-bottom: 5px;"
-                         onerror="this.src='https://via.placeholder.com/280x80?text=FastLimpezas'">
+                         style="width: 100px; height: 100px; border-radius: 28px; margin-bottom: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                    <h2 style="margin: 0; color: #1a1a1a;">Portal FastLimpezas</h2>
+                    <p style="font-size: 11px; color: #6b7280; margin-top: 5px;">Brilho e Excelência para o seu espaço</p>
                 </div>
-                <h2 style="margin-top: 0;">Acesso ao Portal</h2>
                 <form id="login-form" class="buttons">
                     <input type="text" id="username" placeholder="Utilizador" class="input-modern" required>
                     <input type="password" id="password" placeholder="Palavra-passe" class="input-modern" required>
-                    <button type="submit" class="btn primary">
+                    <button type="submit" class="btn primary" style="height: 50px;">
                         <i data-lucide="log-in"></i>
-                        <span>Entrar</span>
+                        <span>Entrar no Portal</span>
+                    </button>
+                    <!-- Botão de Instalação PWA -->
+                    <button id="pwa-install-btn" class="btn-small hidden" type="button" style="background:#f9fafb; border:1px solid #e5e7eb; color:#4b5563; margin-top:15px; width:100%; border-radius:12px; height:45px; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; font-size:12px;">
+                        <i data-lucide="download" style="width:16px"></i>
+                        <span>Instalar Aplicação</span>
                     </button>
                 </form>
             </div>

@@ -1,0 +1,17 @@
+{
+    "name": "FastLimpezas",
+    "short_name": "FastLimpezas",
+    "description": "Premium Cleaning Services for your Home and Office.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#FFC107",
+    "icons": [
+        {
+            "src": "iconFastLimpezas.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
