@@ -55,13 +55,17 @@ body { background-color: #f0f0f0; display: flex; justify-content: center; min-he
 
 /* --- Header NOVO (Mais bonito) --- */
 header {
-    height: 90px;
-    padding: 0 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    background-color: white;
-    border-bottom: 3px solid var(--primary-yellow);
+    align-items: center;
+    border-bottom: 1px solid #f3f4f6;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    flex-shrink: 0;
 }
 
 .header-left {
@@ -101,9 +105,47 @@ header {
     margin-bottom: 2px;
 }
 
-/* --- Views --- */
-.view { height: calc(100vh - 90px - 72px); overflow: hidden; }
-.scroll-container { height: 100%; overflow-y: auto; padding: 20px 20px 100px; }
+/* --- Main Layout --- */
+#main-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+header {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.view {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 100px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.bottom-nav {
+    flex-shrink: 0;
+    position: relative !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    padding: 12px 10px 25px !important;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.05) !important;
+}
 
 /* --- Admin Management (Reparado) --- */
 .admin-stats {
