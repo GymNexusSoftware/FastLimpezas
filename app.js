@@ -191,71 +191,103 @@ function renderClientView() {
     
     const myList = document.getElementById('my-bookings'); if(!myList) return;
     myList.innerHTML = '';
+
+    if (!state.currentUser) return;
+    
+    const todayStr = new Date().toISOString().split('T')[0];
     const userBookings = state.bookings.filter(b => {
-        if (!state.currentUser) return false;
         const myId = state.currentUser.id;
         const myEmail = (state.currentUser.email || "").trim().toLowerCase();
-        
         const bId = b.clientId;
         const bEmail = (b.clientEmail || "").trim().toLowerCase();
-        
         return bId === myId || (myEmail !== "" && bEmail === myEmail);
     });
+
     if (userBookings.length === 0) {
         myList.innerHTML = '<p style="text-align:center; color:#6b7280; padding:20px;">Ainda não tem limpezas agendadas.</p>';
-    } else {
-            userBookings.forEach(b => {
-                const item = document.createElement('div');
-                item.className = 'booking-item';
-                const isWaiting = b.status === 'Aguardando Cliente';
-                const isCancellable = b.status !== 'Cancelado' && b.status !== 'Recusado';
-                const statusClass = b.status.replace(/ /g,'-').toLowerCase();
-                const statusText = isWaiting ? 'Orçamento Recebido' : b.status;
-                
-                item.innerHTML = `
-                    <div class="booking-info">
-                        <h4>${b.serviceName}</h4>
-                        <p>${b.date} • ${b.time}</p>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="status-badge ${statusClass}">${statusText}</span>
-                            ${isCancellable ? `<button class="cancel-b" style="background:none; border:none; color:#ef4444; font-size:11px; cursor:pointer; text-decoration:underline; font-weight:600;">Cancelar</button>` : ''}
-                        </div>
-                        ${isWaiting ? `
-                            <div style="margin-top:12px; display:flex; gap:10px;">
-                                <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Aceitar Valor</button>
-                                <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px;">Recusar</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="booking-price">${b.finalPrice ? b.finalPrice + '€' : '--- '}</div>
-                `;
-                
-                if(isWaiting) {
-                    item.querySelector('.accept-p').onclick = async () => {
-                        if(confirm('Confirma o agendamento por este valor €?')) {
-                            await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
-                            showStatusUpdateEmail({ ...b, status: 'Confirmado' }, true);
-                        }
-                    };
-                    item.querySelector('.reject-p').onclick = async () => {
-                        if(confirm('Deseja recusar este orçamento?')) {
-                            await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
-                            showStatusUpdateEmail({ ...b, status: 'Recusado' }, true);
-                        }
-                    };
-                }
-                if(isCancellable) {
-                    item.querySelector('.cancel-b').onclick = async () => {
-                        if(confirm('Deseja cancelar esta limpeza?')) {
-                            const updated = { ...b, status: 'Cancelado' };
-                            await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
-                            showStatusUpdateEmail(updated, true); // true = Por iniciativa do cliente
-                        }
-                    };
-                }
-                myList.appendChild(item);
-            });
+        return;
     }
+
+    const categories = {
+        upcoming: { title: 'Próximos Serviços', items: [], icon: 'calendar-days' },
+        history: { title: 'Histórico (Realizados)', items: [], icon: 'history' },
+        cancelled: { title: 'Cancelados / Recusados', items: [], icon: 'x-circle' }
+    };
+
+    userBookings.forEach(b => {
+        const isCancelled = b.status === 'Cancelado' || b.status === 'Recusado';
+        const isPast = b.date < todayStr;
+
+        if (isCancelled) categories.cancelled.items.push(b);
+        else if (isPast) categories.history.items.push(b);
+        else categories.upcoming.items.push(b);
+    });
+
+    Object.keys(categories).forEach(key => {
+        const cat = categories[key];
+        if (cat.items.length === 0) return;
+
+        // Header da Categoria
+        const header = document.createElement('div');
+        header.className = 'booking-category-header';
+        header.innerHTML = `<i data-lucide="${cat.icon}"></i> <span>${cat.title}</span>`;
+        myList.appendChild(header);
+
+        cat.items.forEach(b => {
+            const item = document.createElement('div');
+            item.className = `booking-item ${key}`;
+            const isWaiting = b.status === 'Aguardando Cliente';
+            const isCancellable = b.status !== 'Cancelado' && b.status !== 'Recusado' && b.date >= todayStr;
+            const statusClass = b.status.replace(/ /g,'-').toLowerCase();
+            const statusText = isWaiting ? 'Orçamento Recebido' : b.status;
+            
+            item.innerHTML = `
+                <div class="booking-info">
+                    <h4>${b.serviceName}</h4>
+                    <p>${b.date} • ${b.time}</p>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        ${isCancellable ? `<button class="cancel-b" style="background:none; border:none; color:#ef4444; font-size:11px; cursor:pointer; text-decoration:underline; font-weight:600;">Cancelar</button>` : ''}
+                    </div>
+                    ${isWaiting ? `
+                        <div style="margin-top:12px; display:flex; gap:10px;">
+                            <button class="btn-small accept-p" style="background:var(--primary-green); color:white; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Aceitar Valor</button>
+                            <button class="btn-small reject-p" style="background:#fee2e2; color:#b91c1c; border:none; padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px;">Recusar</button>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="booking-price">${b.finalPrice ? b.finalPrice + '€' : '--- '}</div>
+            `;
+            
+            if(isWaiting) {
+                item.querySelector('.accept-p').onclick = async (e) => {
+                    e.stopPropagation();
+                    if(confirm('Confirma o agendamento por este valor €?')) {
+                        await update(ref(db, "bookings/" + b.id), { status: 'Confirmado' });
+                        showStatusUpdateEmail({ ...b, status: 'Confirmado' }, true);
+                    }
+                };
+                item.querySelector('.reject-p').onclick = async (e) => {
+                    e.stopPropagation();
+                    if(confirm('Deseja recusar este orçamento?')) {
+                        await update(ref(db, "bookings/" + b.id), { status: 'Recusado' });
+                        showStatusUpdateEmail({ ...b, status: 'Recusado' }, true);
+                    }
+                };
+            }
+            if(isCancellable) {
+                item.querySelector('.cancel-b').onclick = async (e) => {
+                    e.stopPropagation();
+                    if(confirm('Deseja cancelar esta limpeza?')) {
+                        const updated = { ...b, status: 'Cancelado' };
+                        await update(ref(db, "bookings/" + b.id), { status: 'Cancelado' });
+                        showStatusUpdateEmail(updated, true);
+                    }
+                };
+            }
+            myList.appendChild(item);
+        });
+    });
     window.lucide.createIcons();
 }
 
@@ -537,7 +569,12 @@ function showStatusUpdateEmail(bk, isClientAction = false) {
     const isConfirm = bk.status === 'Confirmado';
     const isCancel = bk.status === 'Cancelado';
     const isReject = bk.status === 'Recusado';
-    const subject = isConfirm ? "Serviço Confirmado ✅" : (isCancel ? "Serviço Cancelado ❌" : "Atualização de Serviço ℹ️");
+    
+    // Assunto dinâmico conforme a ação
+    let subject = "Atualização de Serviço ℹ️";
+    if(isConfirm) subject = "Serviço Confirmado ✅";
+    if(isCancel) subject = isClientAction ? "Confirmação de Cancelamento ❌" : "Aviso de Cancelamento ❌";
+    if(isReject) subject = "Orçamento Recusado ℹ️";
     
     let messageHtml = "";
     if(isConfirm) {
@@ -555,17 +592,17 @@ function showStatusUpdateEmail(bk, isClientAction = false) {
     } else if(isCancel) {
         if(isClientAction) {
             messageHtml = `
-                <p>Confirmamos o seu **pedido de cancelamento** para o serviço de <strong>${bk.serviceName}</strong> (${bk.date}).</p>
-                <p>Lamentamos que não tenha sido desta vez, mas esperamos vê-lo em breve.</p>
+                <p>Confirmamos que <strong>procedeu ao cancelamento</strong> do seu agendamento para o serviço de <strong>${bk.serviceName}</strong> (${bk.date}).</p>
+                <p>O cancelamento foi processado com sucesso. Esperamos poder servir-lhe numa próxima oportunidade.</p>
             `;
         } else {
             messageHtml = `
-                <p><strong>Aviso Importante:</strong> Lamentamos informar que o seu serviço de <strong>${bk.serviceName}</strong> agendado para o dia <strong>${bk.date}</strong> foi <strong>Cancelado pela Equipa de Gestão</strong>.</p>
-                <p>Pode entrar em contacto connosco para reagendamento se desejar.</p>
+                <p><strong>Aviso Importante:</strong> Lamentamos informar que o seu serviço de <strong>${bk.serviceName}</strong> agendado para o dia <strong>${bk.date}</strong> foi <strong>Cancelado pela nossa Equipa de Gestão</strong>.</p>
+                <p>Estamos ao seu dispor para qualquer esclarecimento ou novo agendamento.</p>
             `;
         }
     } else if(isReject) {
-        messageHtml = `<p>O orçamento para o serviço de <strong>${bk.serviceName}</strong> foi recusado. Pedimos desculpa por não termos atingido as suas expectativas.</p>`;
+        messageHtml = `<p>O orçamento para o serviço de <strong>${bk.serviceName}</strong> foi recusado. Atribuímos o estado de recusado ao seu pedido e lamentamos não ter atingido as suas expectativas.</p>`;
     } else {
         messageHtml = `<p>O estado do seu serviço de <strong>${bk.serviceName}</strong> (${bk.date}) foi atualizado para: <strong>${bk.status}</strong>.</p>`;
     }
@@ -574,7 +611,8 @@ function showStatusUpdateEmail(bk, isClientAction = false) {
         <div style="font-family: 'Outfit', sans-serif;">
             <h2 style="color: #2D5A27; margin-bottom: 20px;">Estado do Serviço</h2>
             ${messageHtml}
-            <p style="margin-top: 20px;">Atenciosamente,<br><strong>A Equipa FastLimpezas</strong></p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #6B7280; font-size: 13px;">Obrigado,<br><strong>A Equipa FastLimpezas</strong></p>
         </div>
     `;
     triggerEmailSimulation(bk.clientEmail, subject, content); 

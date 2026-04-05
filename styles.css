@@ -280,6 +280,30 @@ header {
     color: var(--primary-green-dark);
 }
 
+.booking-category-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 25px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-yellow);
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.booking-category-header i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary-green);
+}
+
+.booking-item.history { opacity: 0.8; border-left-color: #9ca3af; }
+.booking-item.cancelled { opacity: 0.7; border-left-color: #fca5a5; background: #fffcfc; }
+.booking-item.cancelled .booking-price { text-decoration: line-through; color: #9ca3af; }
+
 .status-badge { 
     font-size: 9px; 
     font-weight: 800; 
